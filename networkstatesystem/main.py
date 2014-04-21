@@ -86,6 +86,8 @@ if __name__ == "__main__":
 
 	host_list = []
 	host_list, ifcount, detail, format, outputfile = initArgs()
+
+	device_detail_list = {}
 	
 	# Collect information from host_list
 	for ipaddress, community in host_list:
@@ -93,12 +95,26 @@ if __name__ == "__main__":
 		if format == 'text':
 			print "Gathering SNMP Data for, %s using the community %s" % (ipaddress, community)
 
+
 		hostname = hostinfo(ipaddress, community)
 		interfacedata = populateifdata(ipaddress, community)
+		routingdata = collectroutingtable(ipaddress, community)
 		# Collect routing info
 
-		if ifcount == True:
+		device_detail_list[ipaddress] = device(hostname, ipaddress, 'snmp', routingdata, interfacedata)
+
+		"""print device_detail_list[ipaddress].hostname
+		print device_detail_list[ipaddress].ipaddress
+		print device_detail_list[ipaddress].datasource
+		print device_detail_list[ipaddress].routingtable
+		print device_detail_list[ipaddress].interfacetable"""
+
+		device_detail_list[ipaddress].printinfo()
+
+
+
+		"""if ifcount == True:
 			printinterfacesumary(interfacedata, format, hostname)
 		if detail == True:
-			printinterfacestats(interfacedata, format, hostname)
+			printinterfacestats(interfacedata, format, hostname)"""
 
