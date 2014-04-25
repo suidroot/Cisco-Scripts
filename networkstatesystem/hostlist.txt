@@ -1,3 +1,4 @@
-# host:community
-10.5.6.254:poopie
-10.5.6.79:yourmom
+# host:community:datasource
+10.5.6.254:poopie:snmp
+#10.5.6.79:yourmom:snmp
+10.211.55.7:yourmom:snmp
