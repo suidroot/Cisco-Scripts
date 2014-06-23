@@ -61,14 +61,14 @@ def initargs():
                     try:
                         device = gethostbyname(device)
                     except:
-                        print "Invalid hostname: {0}".format(device)
-                        break
+                        errormsg = "Invalid hostname: " + arg.ip_address
+                        sys.exit(errormsg)
 
                     if ipaddress.ip_address(device):
                         hosts.append([device, community.rstrip(), datasource])
                     else:
-                        print "Invalid IP Address: {0}".format(device)
-                        break
+                        errormsg = "Invalid IP Address: " + device
+                        sys.exit(errormsg)
 
     else:
         # set ip address to make calls on
