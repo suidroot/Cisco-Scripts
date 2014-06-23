@@ -1,9 +1,0 @@
-# host:community:datasource
-
-# juniper
-10.5.6.254:poopie:snmp
-# cisco
-192.168.56.50:yourmom:snmp
-# vyatta
-192.168.56.54:yourmom:snmp
-#10.211.55.7:yourmom:snmp

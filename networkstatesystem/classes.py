@@ -6,9 +6,7 @@ import json
 import prettytable
 
 class device_interface(object):
-    """
-        This defines the information that defines an device interface
-    """
+    """ This defines the information that defines an device interface """
 
     _ifIndex = 0
     _ifDescr = ""
@@ -33,13 +31,11 @@ class device_interface(object):
     _ifOutQLen = 0
     _ifSpecific = 0
 
-
-
-    def __init__(self, ifIndex, ifDescr, ifType, ifMtu, ifSpeed, ifPhysAddress, \
-        ifAdminStatus, ifOperStatus, ifLastChange, ifInOctets, ifUcastPkts, \
-        ifInNUcastPkts, ifInDiscards, ifInErrors, ifInUnknownProtos, ifOutOctets, \
-        ifOutUcastPkts, ifOutNUcastPkts, ifOutDiscards, ifOutErrors, ifOutQLen, \
-        ifSpecific):
+    def __init__(self, ifIndex, ifDescr, ifType, ifMtu, ifSpeed, \
+        ifPhysAddress, ifAdminStatus, ifOperStatus, ifLastChange, ifInOctets, \
+        ifUcastPkts, ifInNUcastPkts, ifInDiscards, ifInErrors, \
+        ifInUnknownProtos, ifOutOctets, ifOutUcastPkts, ifOutNUcastPkts, \
+        ifOutDiscards, ifOutErrors, ifOutQLen, ifSpecific):
 
         self._ifIndex = ifIndex
         self._ifDescr = ifDescr
@@ -103,6 +99,7 @@ class device_interface(object):
         return return_string
 
     def dictrepr(self):
+        """ Represent the information in dictionary format """
 
         return_dict = {}
 
@@ -132,6 +129,7 @@ class device_interface(object):
         return return_dict
 
 class device_routingtable(object):
+    """ Define a route entry """
 
     _ipCidrRouteDest = ""
     _ipCidrRouteNextHopAS = ""
@@ -200,9 +198,7 @@ class device_routingtable(object):
 # Generic Device Class
 # This is the parent to all of the sub element information
 class device(object):
-    """
-        Definitaion of a device
-    """
+    """ Definitaion of a device and contained information """
     _hostname = ""
     _osversion = ""
     _primaryipaddress = ""
@@ -224,10 +220,14 @@ class device(object):
 
     def __str__(self):
 
-        outformat = 'table'
+        #outformat = 'table'
         return_string = "Hostname: {0}\n".format(self._hostname)
         return_string += "Version: {0}\n".format(self._osversion)
-        return_string += "IP Address: {0}\n".format(self._primaryipaddress)
+        return_string += "Primary IP Address: {0}\n".format(self._primaryipaddress)
+        return_string += "IP Addresses: "
+        for address in self.ipaddresses:
+            return_string += "{0} ".format(address)
+        return_string += "\n"
         return_string += "Data Source: {0}\n".format(self._datasource)
         return_string += "\nInterface Information\n"
         return_string += str(self.interfacetable)
@@ -236,8 +236,9 @@ class device(object):
 
         return return_string
 
-
     def addSNMPInterfaces(self, interfacetable):
+        """ add a new interface """
+
         ifIndex = 0
         ifDescr = ""
         ifType = ""
@@ -259,7 +260,6 @@ class device(object):
         ifOutDiscards = 0
         ifOutErrors = 0
         ifOutQLen = 0
-
 
         for loop_ifIndex in interfacetable:
             for ifAttr in interfacetable[loop_ifIndex]:
@@ -316,6 +316,7 @@ class device(object):
                 ifOutErrors, ifOutQLen, ifSpecific)
 
     def addSNMPRoutes(self, routingtable):
+        """ Add a new Route """
 
         ipCidrRouteDest = ""
         ipCidrRouteNextHopAS = ""
@@ -336,7 +337,6 @@ class device(object):
 
         for loop_rtIndex in routingtable:
             for ifAttr in routingtable[loop_rtIndex]:
-                #print ifAttr, routingtable[loop_rtIndex][ifAttr]
                 if ifAttr == 1:
                     ipCidrRouteDest = routingtable[loop_rtIndex][ifAttr]
                 elif ifAttr == 10:
@@ -379,20 +379,13 @@ class device(object):
                 ipCidrRouteInf)
 
     def printroutingtable(self, outformat):
+        """ Display Routing table """
 
         routingtable = self.routingtable
-
         ignoreoids = [8, 11, 12, 13, 14, 15]
 
         ipCidrRouteEntry = {
             1:"ipCidrRouteDest",
-            10:"ipCidrRouteNextHopAS",
-            11:"ipCidrRouteMetric1",
-            12:"ipCidrRouteMetric2",
-            13:"ipCidrRouteMetric3",
-            14:"ipCidrRouteMetric4",
-            15:"ipCidrRouteMetric5",
-            16:"ipCidrRouteStatus",
             2:"ipCidrRouteMask",
             3:"ipCidrRouteTos",
             4:"ipCidrRouteNextHop",
@@ -400,26 +393,32 @@ class device(object):
             6:"ipCidrRouteType",
             7:"ipCidrRouteProto",
             8:"ipCidrRouteAge",
-            9:"ipCidrRouteInfo"
-        }
+            9:"ipCidrRouteInfo",
+            10:"ipCidrRouteNextHopAS",
+            11:"ipCidrRouteMetric1",
+            12:"ipCidrRouteMetric2",
+            13:"ipCidrRouteMetric3",
+            14:"ipCidrRouteMetric4",
+            15:"ipCidrRouteMetric5",
+            16:"ipCidrRouteStatus"
+         }
 
         headerrow = []
         headerrow.append("hostname")
 
-        for id in sorted(ipCidrRouteEntry):
-            if id not in ignoreoids:
-                headerrow.append(ipCidrRouteEntry[id])
+        for routeid in sorted(ipCidrRouteEntry):
+            if routeid not in ignoreoids:
+                headerrow.append(ipCidrRouteEntry[routeid])
 
         if outformat == 'csv':
             print ",".join(headerrow)
             for routeid in sorted(routingtable):
-                currentrow = [self.hostname]
+                currentrow = [self._hostname]
                 for oid in sorted(routingtable[routeid]):
                     if oid not in ignoreoids:
                         currentrow.append(routingtable[routeid][oid])
                 print ",".join(currentrow)
         elif outformat == 'json':
-
             print json.dumps(routingtable, sort_keys=True, indent=4, \
                 separators=(',', ': '))
 
@@ -436,7 +435,7 @@ class device(object):
             thetable = prettytable.PrettyTable(headerrow)
 
             for routeid in sorted(routingtable):
-                currentrow = [self.hostname]
+                currentrow = [self._hostname]
                 for oid in sorted(routingtable[routeid]):
                     if oid not in ignoreoids:
                         currentrow.append(routingtable[routeid][oid])
@@ -445,6 +444,7 @@ class device(object):
             print thetable
 
     def printinterfacesumary(self, outformat):
+        """ Display Interface Summary Information """
 
         interfacedata = self.interfacetable
         hostname = self._hostname
@@ -478,6 +478,7 @@ class device(object):
 
 
     def printinterfacestats(self, outformat):
+        """ display all interface detail """
 
         interfacedata = self.interfacetable
         hostname = self._hostname
@@ -525,9 +526,9 @@ class device(object):
             headerrow = []
             headerrow.append("hostname")
 
-            for id in sorted(ifmib):
-                if id not in ignoreoids:
-                    headerrow.append(ifmib[id])
+            for ifid in sorted(ifmib):
+                if ifid not in ignoreoids:
+                    headerrow.append(ifmib[ifid])
 
             print ",".join(headerrow)
 
@@ -553,9 +554,9 @@ class device(object):
             headerrow = []
             headerrow.append("hostname")
 
-            for id in sorted(ifmib):
-                if id not in ignoreoids:
-                    headerrow.append(ifmib[id])
+            for ifid in sorted(ifmib):
+                if ifid not in ignoreoids:
+                    headerrow.append(ifmib[ifid])
 
             thetable = prettytable.PrettyTable(headerrow)
 
@@ -602,16 +603,17 @@ class device(object):
 
     def returnjson(self):
 
-        device = {}
+        currentdevice = {}
 
-        device['hostname'] = self._hostname
-        device['osversion'] = self._osversion
-        device['primaryipaddress'] = self._primaryipaddress
-        device['datasource'] = self._datasource
-        device['routingtable'] = self.routingtable
-        device['interfacetable'] = self.interfacetable
+        currentdevice['hostname'] = self._hostname
+        currentdevice['osversion'] = self._osversion
+        currentdevice['primaryipaddress'] = self._primaryipaddress
+        currentdevice['datasource'] = self._datasource
+        currentdevice['routingtable'] = self.routingtable
+        currentdevice['interfacetable'] = self.interfacetable
 
-        #print device
-        return json.dumps(device, sort_keys=True, indent=4, separators=(',', ': '))
+        #print currentdevice
+        return json.dumps(currentdevice, sort_keys=True, indent=4, \
+            separators=(',', ': '))
 
 

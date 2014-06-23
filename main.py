@@ -4,13 +4,13 @@
 # system Libraries
 import sys
 import string
-#import struct
 import argparse
-#import csv
+import ipaddress
+from socket import gethostbyname
 
 # Network Libraries
-from classes import *
-from vendors.snmp.querydevicedata import *
+from networkstatesystem.classes import *
+from networkstatesystem.vendors.snmp.querydevicedata import *
 
 def initargs():
     """ Defines the Command line Arguments """
@@ -42,28 +42,56 @@ def initargs():
     if arg.file:
         with open(arg.file, "r") as host_list:
             for line in host_list:
-                (device, community, datasource) = string.split(line, ':')
-                if device[0] == "#":
+                line = line.strip()
+                #print "'{0}'".format(line)
+                if line == "":
+                    # if lines blank
+                    pass
+                elif line[0] == "#":
+                    # if comment line
                     pass
                 else:
-                    hosts.append([device, community.rstrip(), datasource])
+                    (device, community, datasource) = string.split(line, ':')
+                    try:
+                        device = gethostbyname(device)
+                    except:
+                        print "Invalid hostname: {0}".format(device)
+                        break
+
+                    if ipaddress.ip_address(device):
+                        hosts.append([device, community.rstrip(), datasource])
+                    else:
+                        print "Invalid IP Address: {0}".format(device)
+                        break
+
     else:
         # set ip address to make calls on
         if arg.ip_address:
-            device = arg.ip_address
+            # device = 
+            try:
+                device = gethostbyname(arg.ip_address)
+            except:
+                errormsg = "Invalid hostname: " + arg.ip_address
+                sys.exit(errormsg)
+
+            if ipaddress.ip_address(device):
+                pass
+            else:
+                errormsg = "Invalid IP Address: " + device
+                sys.exit(errormsg)
         else:
             sys.exit("You should specify a Host")
-            #device = '10.5.6.254'
 
         if arg.ip_address:
             community = arg.community
         else:
             sys.exit("You should specify a community")
-            #community = 'poopie'
+
         if arg.datasource:
             datasource = arg.datasource
         else:
             datasource = 'snmp'
+
         hosts.append([device, community.rstrip(), datasource])
 
     # Parse other options
@@ -108,13 +136,12 @@ if __name__ == "__main__":
 ##### Start Main Section ######
 
     host_list, toggles = initargs()
-
     device_detail_list = {}
 
     # Collect information from host_list
     for ipaddress, community, datasource in host_list:
         if toggles['format'] == 'text':
-            print "Gathering SNMP Data for, {0} using the community {1}\n\n".format(ipaddress, community)
+            print "Gathering SNMP Data for {0} using the community {1}\n".format(ipaddress, community)
 
         hostname = gethostname(ipaddress, community)
         osversion = getosversion(ipaddress, community)
@@ -126,6 +153,10 @@ if __name__ == "__main__":
             datasource)
         device_detail_list[ipaddress].addSNMPInterfaces(interfacedata)
         device_detail_list[ipaddress].addSNMPRoutes(routingdata)
+        device_detail_list[ipaddress].ipaddresses = \
+            collectipaddresses(ipaddress, community)
+        device_detail_list[ipaddress].neighborinformation = \
+            collectlldpneighbors(ipaddress, community)
 
         if toggles['ifcount'] == True:
             device_detail_list[ipaddress].printinterfacesumary(toggles['format'])
