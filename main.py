@@ -12,6 +12,12 @@ from socket import gethostbyname
 from networkstatesystem.classes import *
 from networkstatesystem.vendors.snmp.querydevicedata import *
 
+__author__ = "Ben Mason"
+__copyright__ = "Copyright 2014"
+__version__ = "1.0.0"
+__email__ = "su1droot@gmail.com"
+__status__ = "Development"
+
 def initargs():
     """ Defines the Command line Arguments """
 
