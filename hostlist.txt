@@ -9,4 +9,4 @@
 #10.211.55.7:yourmom:snmp
 # Lab Network
 192.168.1.100:testnetwork:snmp
-1.a.3.2:blah:snmp
+#1.a.3.2:blah:snmp

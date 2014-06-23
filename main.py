@@ -18,7 +18,7 @@ __version__ = "1.0.0"
 __email__ = "su1droot@gmail.com"
 __status__ = "Development"
 
-def initargs():
+def collectargs():
     """ Defines the Command line Arguments """
 
     parser = argparse.ArgumentParser()
@@ -41,49 +41,51 @@ def initargs():
 
     arg = parser.parse_args()
 
+    return arg
+
+def createhostlist(arg):
+    """ Create hosst list from either file for Commandline """
+
     hosts = []
-    toggles = {}
 
     # Gather host information from File or Commandline
     if arg.file:
         with open(arg.file, "r") as host_list:
             for line in host_list:
                 line = line.strip()
-                #print "'{0}'".format(line)
                 if line == "":
-                    # if lines blank
+                    # if lines blank skip
                     pass
                 elif line[0] == "#":
-                    # if comment line
+                    # if comment line skip
                     pass
                 else:
                     (device, community, datasource) = string.split(line, ':')
                     try:
                         device = gethostbyname(device)
                     except:
-                        errormsg = "Invalid hostname: " + arg.ip_address
+                        errormsg = "Invalid hostname in config file: " + str(device)
                         sys.exit(errormsg)
 
                     if ipaddress.ip_address(device):
                         hosts.append([device, community.rstrip(), datasource])
                     else:
-                        errormsg = "Invalid IP Address: " + device
+                        errormsg = "Invalid IP Address in config file: " + str(device)
                         sys.exit(errormsg)
 
     else:
         # set ip address to make calls on
         if arg.ip_address:
-            # device = 
             try:
                 device = gethostbyname(arg.ip_address)
             except:
-                errormsg = "Invalid hostname: " + arg.ip_address
+                errormsg = "Invalid hostname: " + str(arg.ip_address)
                 sys.exit(errormsg)
 
             if ipaddress.ip_address(device):
                 pass
             else:
-                errormsg = "Invalid IP Address: " + device
+                errormsg = "Invalid IP Address: " + str(device)
                 sys.exit(errormsg)
         else:
             sys.exit("You should specify a Host")
@@ -100,7 +102,13 @@ def initargs():
 
         hosts.append([device, community.rstrip(), datasource])
 
-    # Parse other options
+    return hosts
+
+def optionoptions(arg):
+    """ Set output parameters """
+
+    toggles = {}
+
     if arg.ifcount:
         toggles['ifcount'] = True
     else:
@@ -135,13 +143,16 @@ def initargs():
     else:
         toggles['output'] = ""
 
-    return hosts, toggles
+    return toggles
 
 
 if __name__ == "__main__":
 ##### Start Main Section ######
 
-    host_list, toggles = initargs()
+    args = collectargs()
+    host_list = createhostlist(args)
+    toggles = optionoptions(args)
+
     device_detail_list = {}
 
     # Collect information from host_list
