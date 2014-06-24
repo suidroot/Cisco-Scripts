@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """
 This Module conatins all of the information defining Network elements
 """

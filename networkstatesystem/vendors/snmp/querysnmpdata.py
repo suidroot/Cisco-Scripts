@@ -1,12 +1,14 @@
 #!/usr/bin/env python
 """
-Direct SNMP functions
+Functions to interface with SNMP library and return data as a 
+dictionary or single element
 """
 
 from pysnmp.entity.rfc3413.oneliner import cmdgen
 
 def snmpwalkoid(device, community, oids):
-    """ This Walks more then one SNMP OID """
+    """ This Walks more then one SNMP OID returns dictionary 
+    of a list of OIDs """
 
     snmpcmdgen = cmdgen.CommandGenerator()
 
@@ -27,7 +29,7 @@ def snmpwalkoid(device, community, oids):
 
 def snmpgetoid(device, community, oids):
     """ This function queries the device for a given ip, community and single 
-    OID. It will talk the OID tree. """
+    OID. intented to return one OID ad value """
 
     snmpcmdgen = cmdgen.CommandGenerator()
 
