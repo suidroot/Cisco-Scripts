@@ -1,13 +1,15 @@
 #!/usr/bin/env python
+""" SNMP Host """
 
-
-from querysnmpdata import snmpwalkoid
-from querysnmpdata import snmpgetoid
+from .querysnmpdata import snmpwalkoid
+from .querysnmpdata import snmpgetoid
 import string
+import json
 
 class snmp(object):
+    """ Object """
 
-    def ___init___(self, address, community):
+    def __init__(self, address, community):
 
         self.community = community
         self.address = address
@@ -18,7 +20,7 @@ class snmp(object):
         oids = '1.3.6.1.2.1.2.2.1'
         interfacetable = {}
 
-        walkreturn = snmpwalkoid(device, community, oids)
+        walkreturn = snmpwalkoid(self.address, self.community, oids)
 
         for currentrow in walkreturn:
             for indexoid, val in currentrow:
@@ -104,12 +106,15 @@ class snmp(object):
                 elif ifAttr == 22:
                     ifSpecific = interfacetable[loop_ifIndex][ifAttr]
 
-            interfacetable[loop_ifIndex] = device_interface(ifIndex, \
+            interfacetable[loop_ifIndex] = [ifIndex, \
                 ifDescr, ifType, ifMtu, ifSpeed, ifPhysAddress, ifAdminStatus, \
                 ifOperStatus, ifLastChange, ifInOctets, ifUcastPkts, \
                 ifInNUcastPkts, ifInDiscards, ifInErrors, ifInUnknownProtos, \
                 ifOutOctets, ifOutUcastPkts, ifOutNUcastPkts, ifOutDiscards, \
-                ifOutErrors, ifOutQLen, ifSpecific)
+                ifOutErrors, ifOutQLen, ifSpecific]
+
+        # returnval = json.dumps(interfacetable, sort_keys=True, indent=4, \
+        #     separators=(',', ': '))
 
         return interfacetable
 
@@ -117,7 +122,7 @@ class snmp(object):
         """ Add a new Route """
 
         oids = '1.3.6.1.2.1.4.24.4.1.'
-        walkreturn = snmpwalkoid(device, community, oids)
+        walkreturn = snmpwalkoid(self.address, self.community, oids)
 
         # oid example 1.3.6.1.2.1.4.24.4.1.24.4.1.1.10.5.6.0.255.255.255.0.0.0.0.0.0
         routingtable = {}
@@ -188,21 +193,21 @@ class snmp(object):
                 elif ifAttr == 9:
                     ipCidrRouteInfo = routingtable[loop_rtIndex][ifAttr]
 
-            routingtable[loop_rtIndex] = device_routingtable( \
+            routingtable[loop_rtIndex] = [ \
                 ipCidrRouteDest, ipCidrRouteNextHopAS, ipCidrRouteMetric1, \
                 ipCidrRouteMetric2, ipCidrRouteMetric3, ipCidrRouteMetric4, \
                 ipCidrRouteMetric5, ipCidrRouteStatus, ipCidrRouteMask, \
                 ipCidrRouteTos, ipCidrRouteNextHop, ipCidrRouteIfIndex, \
                 ipCidrRouteType, ipCidrRouteProto, ipCidrRouteAge, \
-                ipCidrRouteInf)
+                ipCidrRouteInf]
 
         return routingtable
 
 
-    def collectipaddresses(device, community):
+    def collectipaddresses(self):
         """ Collects list of IP addresses from the device """
         oids = '1.3.6.1.2.1.4.34.1.3.1.4.'
-        walkreturn = snmpwalkoid(device, community, oids)
+        walkreturn = snmpwalkoid(self.address, self.community, oids)
 
         ipaddresslist = []
 
@@ -219,104 +224,115 @@ class snmp(object):
         return ipaddresslist
 
 
-    def collectlldpneighbors(device, community):
+    # def collectlldpneighbors(self):
 
-        """
-        nei {
-            neighborid {
-                ifindex 0
-                lldpRemChassisIdSubtype 4
-                lldpRemChassisId 5
-                lldpRemPortIdSubtype 6
-                lldpRemPortId 7
-                lldpRemPortDesc 8
-                lldpRemSysName 9
-                lldpRemSysDesc 10
-                lldpRemSysCapSupported 11
-                lldpRemSysCapEnabled 12
-                lldpRemManAddrIfSubtype 3
-                lldpRemManAddrIfId 4
-                lldpRemManAddrOID 5
-        """
+    #     """
+    #     nei {
+    #         neighborid {
+    #             ifindex 0
+    #             lldpRemChassisIdSubtype 4
+    #             lldpRemChassisId 5
+    #             lldpRemPortIdSubtype 6
+    #             lldpRemPortId 7
+    #             lldpRemPortDesc 8
+    #             lldpRemSysName 9
+    #             lldpRemSysDesc 10
+    #             lldpRemSysCapSupported 11
+    #             lldpRemSysCapEnabled 12
+    #             lldpRemManAddrIfSubtype 3
+    #             lldpRemManAddrIfId 4
+    #             lldpRemManAddrOID 5
+    #     """
 
-        lldpneighborlist = {}
+    #     lldpneighborlist = {}
 
-        # collect lldpRemTable
-        oids = '1.0.8802.1.1.2.1.4.1.1.'
-        walkreturn = snmpwalkoid(device, community, oids)
+    #     # collect lldpRemTable
+    #     oids = '1.0.8802.1.1.2.1.4.1.1.'
+    #     walkreturn = snmpwalkoid(self.address, self.community, oids)
 
-        for currentrow in walkreturn:
-            for indexoid, val in currentrow:
-                value = val.prettyPrint()
-                remainingoid = string.replace(indexoid.prettyPrint(), oids, '')
-                # 4.85400.2.1
-                print remainingoid
-                (mibfunction, neighborindex, ifindex, null) = string.split(remainingoid, '.')
-                mibfunction =+ ".1"
-                # oid 10 in hex not ascii
+    #     for currentrow in walkreturn:
+    #         for indexoid, val in currentrow:
+    #             value = val.prettyPrint()
+    #             remainingoid = string.replace(indexoid.prettyPrint(), oids, '')
+    #             # 4.85400.2.1
+    #             print remainingoid
+    #             (mibfunction, neighborindex, ifindex, null) = \
+    #                 string.split(remainingoid, '.')
+    #             mibfunction=+".1"
+    #             # oid 10 in hex not ascii
 
-                if neighborindex in lldpneighborlist:
-                    lldpneighborlist[neighborindex][mibfunction] = value
-                else:
-                    lldpneighborlist[neighborindex] = {}
-                    lldpneighborlist[neighborindex][0] = ifindex
-                    lldpneighborlist[neighborindex][mibfunction] = value
+    #             if neighborindex in lldpneighborlist:
+    #                 lldpneighborlist[neighborindex][mibfunction] = value
+    #             else:
+    #                 lldpneighborlist[neighborindex] = {}
+    #                 lldpneighborlist[neighborindex][0] = ifindex
+    #                 lldpneighborlist[neighborindex][mibfunction] = value
 
-        oids = '1.0.8802.1.1.2.1.4.2.1.'
-        walkreturn = snmpwalkoid(device, community, oids)
+    #     oids = '1.0.8802.1.1.2.1.4.2.1.'
+    #     walkreturn = snmpwalkoid(self.address, self.community, oids)
 
-        for currentrow in walkreturn:
-            for indexoid, val in currentrow:
-                value = val.prettyPrint()
-                remainingoid = string.replace(indexoid.prettyPrint(), oids, '')
-                # 5.85400.2.1.1.4.192.168.56.50
+    #     for currentrow in walkreturn:
+    #         for indexoid, val in currentrow:
+    #             value = val.prettyPrint()
+    #             remainingoid = string.replace(indexoid.prettyPrint(), oids, '')
+    #             # 5.85400.2.1.1.4.192.168.56.50
 
-                (mibfunction, neighborindex, ifindex, null) = string.split(remainingoid, '.', 4)
-                mibfunction =+ ".2"
-                print null
+    #             (mibfunction, neighborindex, ifindex, null) = \
+    #             string.split(remainingoid, '.', 4)
+    #             mibfunction=+".2"
+    #             print null
 
-                if neighborindex in lldpneighborlist:
-                    lldpneighborlist[neighborindex][mibfunction] = value
-                else:
-                    lldpneighborlist[neighborindex] = {}
-                    lldpneighborlist[neighborindex][mibfunction] = value
+    #             if neighborindex in lldpneighborlist:
+    #                 lldpneighborlist[neighborindex][mibfunction] = value
+    #             else:
+    #                 lldpneighborlist[neighborindex] = {}
+    #                 lldpneighborlist[neighborindex][mibfunction] = value
 
-        return lldpneighborlist 
+    #     return lldpneighborlist
 
-
-    def getHostname(device, community):
+    def getHostname(self):
         """ Collect Hostname of device """
 
         sysname = '.1.3.6.1.2.1.1.5.0'
-        oid, hostreturn = snmpgetoid(device, community, sysname)
+        oid, hostreturn = snmpgetoid(self.address, self.community, sysname)
 
         return hostreturn.prettyPrint()
 
-    def getosversion(device, community):
+    def getosversion(self):
         """ Collect OS Information form device """
 
         #osversion = '.1.3.6.1.2.1.25.6.3.1.2.2'
         osversion = '.1.3.6.1.2.1.1.1.0'
-        oid, versionreturn = snmpgetoid(device, community, osversion)
+        oid, versionreturn = snmpgetoid(self.address, self.community, osversion)
 
         return versionreturn.prettyPrint()
 
     def getFacts(self):
 
-        cpu_utilization = self.getCPU()
-        free_memory = self.getfreeMemory()
-        total_memory = self.gettotalMemory()
+        # cpu_utilization = self.getCPU()
+        # free_memory = self.getfreeMemory()
+        # total_memory = self.gettotalMemory()
         hostname = self.getHostname()
-        uptime = self.getUptime()
-        platform = self.getPlatform()
-        serial_number = self.getserialNumber()
-        reboot_reason = self.getReasonforReboot()
-        connect_ip = self.address
+        # uptime = self.getUptime()
+        # platform = self.getPlatform()
+        # serial_number = self.getserialNumber()
+        # reboot_reason = self.getReasonforReboot()
+        # connect_ip = self.address
+        routes = self.getRoutes()
         interfaces = self.getInterfaces()
 
-        facts = {'connect_ip': connect_ip,'serial_number': serial_number, 'cpu_utilization': cpu_utilization, 'free_system_memory': free_memory, 
-                    'total_sytem_memory': total_memory,'hostname': hostname, 'system_uptime': uptime, 'platform': platform,
-                    'last_reboot_reason': reboot_reason, 'vendor':'cisco','interfaces':interfaces,'var_name':self.obj}
-
+        facts = {'connect_ip': self.address, \
+                # 'serial_number': serial_number, \
+                # 'cpu_utilization': cpu_utilization, \
+                # 'free_system_memory': free_memory, \
+                # 'total_sytem_memory': total_memory, \
+                'hostname': hostname, \
+                # 'system_uptime': uptime, \
+                # 'platform': platform, \
+                # 'last_reboot_reason': reboot_reason, \
+                'vendor':'cisco', \
+                'interfaces':interfaces,
+                'routes':routes}
+ 
         return facts
 
