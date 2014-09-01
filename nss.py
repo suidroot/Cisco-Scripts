@@ -156,36 +156,36 @@ if __name__ == "__main__":
     device_detail_list = {}
 
     # Collect information from host_list
-    for ipaddress, community, datasource in host_list:
+    for dev_ipaddress, community, datasource in host_list:
         if toggles['format'] == 'text':
-            print "Gathering SNMP Data for {0} using the community {1}\n".format(ipaddress, community)
+            print "Gathering SNMP Data for {0} using the community {1}\n".format(dev_ipaddress, community)
 
-        hostname = gethostname(ipaddress, community)
-        osversion = getosversion(ipaddress, community)
-        interfacedata = populateifdata(ipaddress, community)
-        routingdata = collectroutingtable(ipaddress, community)
+        hostname = gethostname(dev_ipaddress, community)
+        osversion = getosversion(dev_ipaddress, community)
+        interfacedata = populateifdata(dev_ipaddress, community)
+        routingdata = collectroutingtable(dev_ipaddress, community)
 
         # Collect routing info
-        device_detail_list[ipaddress] = device(hostname, osversion, ipaddress, \
+        device_detail_list[dev_ipaddress] = device(hostname, osversion, dev_ipaddress, \
             datasource)
-        device_detail_list[ipaddress].addSNMPInterfaces(interfacedata)
-        device_detail_list[ipaddress].addSNMPRoutes(routingdata)
-        device_detail_list[ipaddress].ipaddresses = \
-            collectipaddresses(ipaddress, community)
-        device_detail_list[ipaddress].neighborinformation = \
-            collectlldpneighbors(ipaddress, community)
+        device_detail_list[dev_ipaddress].addSNMPInterfaces(interfacedata)
+        device_detail_list[dev_ipaddress].addSNMPRoutes(routingdata)
+        device_detail_list[dev_ipaddress].ipaddresses = \
+            collectipaddresses(dev_ipaddress, community)
+        device_detail_list[dev_ipaddress].neighborinformation = \
+            collectlldpneighbors(dev_ipaddress, community)
 
         if toggles['ifcount'] == True:
-            device_detail_list[ipaddress].printinterfacesumary(toggles['format'])
+            device_detail_list[dev_ipaddress].printinterfacesumary(toggles['format'])
         if toggles['ifdetail'] == True:
-            device_detail_list[ipaddress].printinterfacestats(toggles['format'])
+            device_detail_list[dev_ipaddress].printinterfacestats(toggles['format'])
         if toggles['routedetail'] == True:
-            device_detail_list[ipaddress].printroutingtable(toggles['format'])
+            device_detail_list[dev_ipaddress].printroutingtable(toggles['format'])
         if toggles['allinfo'] == True:
             if toggles['format'] == 'json':
-                print device_detail_list[ipaddress].returnjson()
+                print device_detail_list[dev_ipaddress].returnjson()
             elif toggles['format'] == 'text':
-                print device_detail_list[ipaddress]
+                print device_detail_list[dev_ipaddress]
 
-                #device_detail_list[ipaddress].printallinfo(toggles['format'])
+                #device_detail_list[dev_ipaddress].printallinfo(toggles['format'])
 

@@ -1,10 +1,10 @@
 #!/usr/bin/env python
-"""  stolen from https://pynet.twb-tech.com/blog/python/paramiko-ssh-part1.html """
+"""  
+stolen from https://pynet.twb-tech.com/blog/python/paramiko-ssh-part1.html 
+"""
 
-
-import paramiko
+from networkstatesystem.vendors.ssh.sshhelper import *
 import argparse
-from time import sleep
 from sys import exit
 
 
@@ -32,25 +32,10 @@ def initargs():
 
     return arg
 
-def disable_paging(remote_conn,device_type):
-    '''Disable paging on a Cisco ASA'''
-
-    if device_type.lower() == 'ios':
-        remote_conn.send("terminal length 0\n")
-    elif device_type.lower() == 'asa':
-        remote_conn.send("terminal pager 0\n")
-
-    sleep(1)
-
-    # Clear the buffer on the screen
-    output = remote_conn.recv(1000)
-    # print remote_conn
-    return output
-
-
 def addtoconfig(thebuffer, totallist):
 
-    lines = thebuffer.split("\n")
+    # lines = thebuffer.split("\n")
+    lines = thebuffer
     lines = lines[1:]
     lines = lines[:-1]
 
@@ -72,7 +57,6 @@ if __name__ == '__main__':
 
     completeconfig = []
 
-
     if args.tunnelip:
         tunnelendpoint = args.tunnelip
         collectby = 'ip'
@@ -82,121 +66,100 @@ if __name__ == '__main__':
     else:
         exit("Specify a Search Parameter -t or -m")
 
-    remote_conn_pre = paramiko.SSHClient()
-
-    # Automatically add untrusted hosts (make sure okay for security policy in your environment)
-    remote_conn_pre.set_missing_host_key_policy(
-         paramiko.AutoAddPolicy())
-
-    # initiate SSH connection
-    remote_conn_pre.connect(ip, username=username, password=password)
-    print "SSH connection established to %s" % ip
-
-    # Use invoke_shell to establish an 'interactive session'
-    remote_conn = remote_conn_pre.invoke_shell()
-    print "Interactive SSH session established\n"
-
-    # Strip the initial router prompt
-    # output = remote_conn.recv(1000)
-
-    remote_conn.send("\n")
-
-    if args.enable != "":
-        remote_conn.send("enable\n")
-        remote_conn.send(enable+"\n")
-
-    # Turn off paging
-    disable_paging(remote_conn,'asa')
-
+    remote_conn_pre, remote_conn = \
+        sshconnect(ip, username, password, 'asa', enable)
 
     if collectby.lower() == 'ip':
         # Gather Tunnel Group By IP
-        remote_conn.send("show running-config tunnel-group " + tunnelendpoint + "\n")
-        sleep(2)    
-        output = remote_conn.recv(2000)
-        completeconfig = addtoconfig(output,completeconfig)
+
+        output = ssh_runcommand(remote_conn, \
+            "show running-config tunnel-group " + tunnelendpoint + "\n", \
+            recvbuffer=2000, \
+            recvsleep=2)
+        completeconfig = addtoconfig(output, completeconfig)
 
         # Determine Crypto Map Number form IP Address
-        remote_conn.send("show run crypto map | i " + tunnelendpoint + "\n")
-        sleep(2)
-        output = remote_conn.recv(2000)
-        lines = output.split("\n")
-        cryptomapnumber = lines[1].split(" ")[3]
-        cryptomapname = lines[1].split(" ")[2]
+        output = ssh_runcommand(remote_conn, \
+            "show run crypto map | i " + tunnelendpoint + "\n", \
+            recvbuffer=2000, \
+            recvsleep=2)
+
+        cryptomapnumber = output[1].split(" ")[3]
+        cryptomapname = output[1].split(" ")[2]
 
         # Collect all Crypto Map Configuration
-        remote_conn.send("show run crypto map | i " + cryptomapname + " " + cryptomapnumber + " \n")
-        sleep(2)
-        output = remote_conn.recv(2000)
-        completeconfig = addtoconfig(output,completeconfig)
+        output = ssh_runcommand(remote_conn, \
+            "show run crypto map | i " + cryptomapname + " " + \
+            cryptomapnumber + " \n", \
+            recvbuffer=2000, \
+            recvsleep=2)
 
+        completeconfig = addtoconfig(output, completeconfig)
         # Determine access-list name from Crypto Map config
-        lines = output.split("\n")
-        for line in lines: 
+
+        for line in output: 
             if "match" in line:
                 accesslistname = line.split(" ")
                 accesslistname = accesslistname[6]
                 accesslistname = accesslistname.strip()
 
         # Collect access-list by Name
-        remote_conn.send("show run access-list " + accesslistname + " \n")
-        sleep(2)
-        output = remote_conn.recv(2000)
-        completeconfig = addtoconfig(output,completeconfig)
+        output = ssh_runcommand(remote_conn, \
+            "show run access-list " + accesslistname + " \n", \
+            recvbuffer=2000, \
+            recvsleep=2)
+        completeconfig = addtoconfig(output, completeconfig)
 
 
     elif collectby.lower() == 'number':
-
-
-
         # Determine Crypto Map by Name
-        remote_conn.send('show run crypto map | i interface\n')
-        sleep(2)
-        output = remote_conn.recv(2000)
-        lines = output.split("\n")
-        cryptomapname = lines[1].split(" ")[2]
+        output = ssh_runcommand(remote_conn, \
+            'show run crypto map | i interface\n', \
+            recvbuffer=2000, \
+            recvsleep=2)
+        cryptomapname = output[1].split(" ")[2]
 
         # Collect Crypto Map config
-        remote_conn.send('show run crypto map | i ' + cryptomapname + " " + cryptomapnumber + ' \n')
-        sleep(2)
-        output = remote_conn.recv(2000)
-        completeconfig = addtoconfig(output,completeconfig)
+        output = ssh_runcommand(remote_conn, \
+            'show run crypto map | i ' + cryptomapname + " " + \
+            cryptomapnumber + ' \n', \
+            recvbuffer=2000, \
+            recvsleep=2)
+        completeconfig = addtoconfig(output, completeconfig)
 
         # Determine Tunnel IP address
-        lines = output.split("\n")
-        for line in lines: 
+        for line in output: 
             if "set peer" in line:
                 tunnelendpoint = line.split(" ")
                 tunnelendpoint = tunnelendpoint[6]
                 tunnelendpoint = tunnelendpoint.strip()
 
         # Determine access-list name from Crypto Map config
-        for line in lines: 
+        for line in output: 
             if "match" in line:
                 accesslistname = line.split(" ")
                 accesslistname = accesslistname[6]
                 accesslistname = accesslistname.strip()
 
         # Gather Tunnel Group By IP
-        remote_conn.send("show running-config tunnel-group " + tunnelendpoint + "\n")
-        sleep(2)    
-        output = remote_conn.recv(2000)
-        completeconfig = addtoconfig(output,completeconfig)
+        output = ssh_runcommand(remote_conn, \
+            "show running-config tunnel-group " + tunnelendpoint + "\n", \
+            recvbuffer=2000, \
+            recvsleep=2)
+        completeconfig = addtoconfig(output, completeconfig)
 
         # Collect access-list by Name
-        remote_conn.send("show run access-list " + accesslistname + " \n")
-        sleep(2)
-        output = remote_conn.recv(2000)
-        completeconfig = addtoconfig(output,completeconfig)
+        output = ssh_runcommand(remote_conn, \
+            "show run access-list " + accesslistname + " \n", \
+            recvbuffer=2000, \
+            recvsleep=2)
+        completeconfig = addtoconfig(output, completeconfig)
 
     else:
         exit("No correct Search type, this should not happen")
 
-
-    print "\n\n The Whole thing\n"
+    # print "\n\n The Whole thing\n"
     print "\n".join(completeconfig)
-
-    # crypto map VPN 1 set peer 192.168.1.1
 
 
 
