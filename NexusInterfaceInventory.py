@@ -137,7 +137,7 @@ class interface(object):
 
         return [ 'Blade Number', 'Port Number', 'ifName', 'Type', 'Speed', 
         'Description', 'VLAN', 'Mode', 'Status', 'Status Reason', 'Speed Mode', 
-        'Port Channel', 'vdc', 'asic' ]
+        'Port Channel', 'Connector Type', 'VDC', 'ASIC' ]
 
     def returnlist(self):
         """ Return list of all intrface values """
@@ -277,6 +277,7 @@ def parseshowbr(data, vdc=1):
         if 'monitor' in line[1]: 
             vlan = 0
             mode, status = line[2].split(" ")
+            mode += ' monitor'
             statusreason = line[3]
             speedmode, portchannel = splitmode(line[4])
 
