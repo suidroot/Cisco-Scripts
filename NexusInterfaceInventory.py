@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2.7
 """ Parse Interface data from a Nexus Switch and create CSV summmary data """
 
 
@@ -353,10 +353,13 @@ if __name__ == '__main__':
     briefoutput = []
     statoutput = []
 
+    buffersize=8000
+    sleeptime=5
+
     output = ssh_runcommand(remote_conn, \
         "show interface description\n", \
-        recvbuffer=4000, \
-        recvsleep=2)
+        recvbuffer=buffersize, \
+        recvsleep=sleeptime)
 
     if DEBUG == True:
         print output
@@ -365,8 +368,8 @@ if __name__ == '__main__':
 
     output = ssh_runcommand(remote_conn, \
             "show interface brief\n", \
-            recvbuffer=4000, \
-            recvsleep=2)
+            recvbuffer=buffersize, \
+            recvsleep=sleeptime)
 
     if DEBUG == True:
         print output
@@ -375,8 +378,8 @@ if __name__ == '__main__':
 
     output = ssh_runcommand(remote_conn, \
             "show interface status\n", \
-            recvbuffer=4000, \
-            recvsleep=2)
+            recvbuffer=buffersize, \
+            recvsleep=sleeptime)
     
     if DEBUG == True:
         print output
@@ -389,15 +392,15 @@ if __name__ == '__main__':
             output = ssh_runcommand(remote_conn, \
                     "switchto vdc " + nextvdc + "\n", \
                     recvbuffer=2000, \
-                    recvsleep=2)
+                    recvsleep=sleeptime)
 
             if DEBUG == True:
                 print output
 
             output = ssh_runcommand(remote_conn, \
                 "show interface description\n", \
-                recvbuffer=2000, \
-                recvsleep=2)
+                recvbuffer=buffersize, \
+                recvsleep=sleeptime)
 
             if DEBUG == True:
                 print output
@@ -406,8 +409,8 @@ if __name__ == '__main__':
 
             output = ssh_runcommand(remote_conn, \
                     "show interface brief\n", \
-                    recvbuffer=2000, \
-                    recvsleep=2)
+                    recvbuffer=buffersize, \
+                    recvsleep=sleeptime)
 
             if DEBUG == True:
                 print output
@@ -416,8 +419,8 @@ if __name__ == '__main__':
 
             output = ssh_runcommand(remote_conn, \
                     "show interface status\n", \
-                    recvbuffer=2000, \
-                    recvsleep=2)
+                    recvbuffer=buffersize, \
+                    recvsleep=sleeptime)
 
             if DEBUG == True:
                 print output
