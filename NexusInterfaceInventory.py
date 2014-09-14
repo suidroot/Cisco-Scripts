@@ -393,8 +393,6 @@ if __name__ == '__main__':
     if vdclist == ['']:
         vdclist = []
 
-    print vdclist
-
     descoutput = []
     briefoutput = []
     statoutput = []
@@ -494,6 +492,15 @@ if __name__ == '__main__':
                 print output
 
             statoutput.append(output)
+
+            output = ssh_runcommand(remote_conn, \
+                    "switchback\n", \
+                    recvbuffer=2000, \
+                    recvsleep=2,
+                    showcommand=True)
+
+            if DEBUG == True:
+                print output
 
     ##### Process Data
     # Process "show interface description" Output
