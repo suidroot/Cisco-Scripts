@@ -255,6 +255,8 @@ def parseshowbr(data, vdc=1):
 
     ['Eth2/18', '1', 'eth', 'access down', 'Administratively down', 'auto(D) --'],
     ['Eth2/19', '1', 'eth', 'trunk', 'down', 'Link not connected', 'auto(D) 32'],
+    ['Eth1/25', 'monitor eth', 'access down', 'Link not connected', 'auto(D) --']
+
     """
 
     global allinterfaces
@@ -270,22 +272,32 @@ def parseshowbr(data, vdc=1):
 
     for line in data:
         ifname = line[0]
-        vlan = line[1]
+        try:
+            vlan = int(line[1])
+
+            try:
+                mode, status = line[3].split(" ")
+                statusreason = line[4]
+                speedmode, portchannel = splitmode(line[5])
+            except ValueError:
+                mode = line[3]
+                status = line[4] 
+                statusreason = line[5]
+                speedmode, portchannel = splitmode(line[6])
+
+        except ValueError:
+            # vlan = line[1].split(" ")[1]
+            vlan = 0
+            mode, status = line[2].split(" ")
+            statusreason = line[3]
+            speedmode, portchannel = splitmode(line[4])
 
         if DEBUG == True:
             print line
 
         # Try frust to split column 3 into 2 values, if column 3 
         # only has single word follow alternate flowe
-        try:
-            mode, status = line[3].split(" ")
-            statusreason = line[4]
-            speedmode, portchannel = splitmode(line[5])
-        except ValueError:
-            mode = line[3]
-            status = line[4] 
-            statusreason = line[5]
-            speedmode, portchannel = splitmode(line[6])
+        
 
         if DEBUG == True:
             print vlan, mode, status, statusreason, speedmode, portchannel
