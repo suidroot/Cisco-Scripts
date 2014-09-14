@@ -4,10 +4,10 @@
 
 import pprint
 import argparse
+import sys
 from networkstatesystem.vendors.ssh.sshhelper import *
 
 DEBUG = False
-vdclist = []
 
 
 def initargs():
@@ -25,6 +25,8 @@ def initargs():
     parser.add_argument('-e', '--enable', \
         help='Enable Password', \
         default='')
+    parser.add_argument('-v', '--vdc', \
+        help='Additional VDCs')
     
     arg = parser.parse_args()
 
@@ -345,6 +347,11 @@ if __name__ == '__main__':
     username = args.username
     password = args.password
     enable = args.enable
+    vdc = args.vdc
+
+    vdclist = vdc.split(",")
+    for counter in range(len(vdclist)):
+        vdclist[counter] = vdclist[counter].strip()
 
     remote_conn_pre, remote_conn = \
     sshconnect(ip, username, password, 'ios', enable)
@@ -353,7 +360,8 @@ if __name__ == '__main__':
     briefoutput = []
     statoutput = []
 
-    buffersize=8000
+
+    buffersize=20000
     sleeptime=5
 
     output = ssh_runcommand(remote_conn, \
@@ -393,6 +401,10 @@ if __name__ == '__main__':
                     "switchto vdc " + nextvdc + "\n", \
                     recvbuffer=2000, \
                     recvsleep=sleeptime)
+
+            if "Invalid command" in "\n".join(output):
+                print "\n".join(output)
+                sys.exit("could not change vdc")
 
             if DEBUG == True:
                 print output
