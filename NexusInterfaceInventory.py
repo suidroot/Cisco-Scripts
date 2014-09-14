@@ -7,7 +7,7 @@ import argparse
 import sys
 from networkstatesystem.vendors.ssh.sshhelper import *
 
-DEBUG = True
+DEBUG = False
 
 
 def initargs():
@@ -115,7 +115,7 @@ class interface(object):
         try:
             self.portchannel = int(portchannel)
         except ValueError:
-            self.portchannel = None
+            self.portchannel = ''
 
     def setconnectortype(self, connectortype):
         if connectortype == '10/100/1000':
@@ -367,12 +367,33 @@ if __name__ == '__main__':
     enable = args.enable
     vdc = args.vdc
 
+    # vdclist = vdc.split(",")
+    # for counter in range(len(vdclist)):
+    #     vdclist[counter] = vdclist[counter].strip()
+
+    remote_conn_pre, remote_conn = \
+    sshconnect(ip, username, password, 'ios', enable)
+
+    vdclist = []
+
+    if vdc == None:
+        output = ssh_runcommand(remote_conn, \
+            "show vdc", \
+            recvbuffer=5000, \
+            recvsleep=2,
+            showcommand=False)
+
+        print "\n".join(output)
+        vdc = raw_input("Enter a comma seperated list of non-detault VDCs or Press Enter: ")
+
     vdclist = vdc.split(",")
     for counter in range(len(vdclist)):
         vdclist[counter] = vdclist[counter].strip()
 
-    remote_conn_pre, remote_conn = \
-    sshconnect(ip, username, password, 'ios', enable)
+    if vdclist == ['']:
+        vdclist = []
+
+    print vdclist
 
     descoutput = []
     briefoutput = []
