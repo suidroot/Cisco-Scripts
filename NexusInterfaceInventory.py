@@ -5,6 +5,7 @@
 import pprint
 import argparse
 import sys
+import csv
 from networkstatesystem.vendors.ssh.sshhelper import *
 
 DEBUG = False
@@ -27,6 +28,9 @@ def initargs():
         default='')
     parser.add_argument('-v', '--vdc', \
         help='Additional VDCs')
+    parser.add_argument('-c', '--csv', \
+        help='Create CSV file',
+        action='store_true')
     
     arg = parser.parse_args()
 
@@ -356,6 +360,16 @@ def parseshowintstat(data, vdc=1):
             allinterfaces[ifname].setconnectortype(line[-1])
 
 
+def writecsvfile(ip, datalist):
+
+    filename = ip + '.csv'
+
+    with open(filename, 'wb') as csvfile:
+        spamwriter = csv.writer(csvfile, quotechar='"', quoting=csv.QUOTE_MINIMAL)
+
+        for line in datalist:
+            spamwriter.writerow(line)
+
 allinterfaces = {}
 
 if __name__ == '__main__':
@@ -530,10 +544,24 @@ if __name__ == '__main__':
     if DEBUG == True:
         print allinterfaces[allinterfaces.keys()[0]]
 
-    # Display Data
-    print allinterfaces[allinterfaces.keys()[0]].returnheader()
-    for thekey in allinterfaces.keys():
-        print(allinterfaces[thekey].returnlist())
+    if csv:
+        print "Writing CSV file"
+
+        csvlist = []
+        csvlist.append(allinterfaces[allinterfaces.keys()[0]].returnheader())
+        for thekey in allinterfaces.keys():
+            csvlist.append(allinterfaces[thekey].returnlist())
+
+        if DEBUG == True:
+            print csvlist
+
+        writecsvfile(ip,csvlist)
+
+    else:
+        # Display Data
+        print allinterfaces[allinterfaces.keys()[0]].returnheader()
+        for thekey in allinterfaces.keys():
+            print(allinterfaces[thekey].returnlist())
 
 
 
