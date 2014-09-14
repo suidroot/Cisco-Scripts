@@ -368,7 +368,8 @@ if __name__ == '__main__':
     output = ssh_runcommand(remote_conn, \
         "show interface description\n", \
         recvbuffer=buffersize, \
-        recvsleep=sleeptime)
+        recvsleep=sleeptime,
+        showcommand=True)
 
     if DEBUG == True:
         print output
@@ -379,7 +380,8 @@ if __name__ == '__main__':
     output = ssh_runcommand(remote_conn, \
             "show interface brief\n", \
             recvbuffer=buffersize, \
-            recvsleep=sleeptime)
+            recvsleep=sleeptime,
+            showcommand=True)
 
     if DEBUG == True:
         print output
@@ -390,7 +392,8 @@ if __name__ == '__main__':
     output = ssh_runcommand(remote_conn, \
             "show interface status\n", \
             recvbuffer=buffersize, \
-            recvsleep=sleeptime)
+            recvsleep=sleeptime,
+            showcommand=True)
     
     if DEBUG == True:
         print output
@@ -405,7 +408,8 @@ if __name__ == '__main__':
             output = ssh_runcommand(remote_conn, \
                     "switchto vdc " + nextvdc + "\n", \
                     recvbuffer=2000, \
-                    recvsleep=sleeptime)
+                    recvsleep=2,
+                    showcommand=True)
 
             if "Invalid command" in "\n".join(output):
                 print "\n".join(output)
@@ -416,9 +420,20 @@ if __name__ == '__main__':
 
             print "Running Command: show interface description"
             output = ssh_runcommand(remote_conn, \
+                    "terminal length 0\n", \
+                    recvbuffer=buffersize, \
+                    recvsleep=sleeptime,
+                    showcommand=True)
+
+            if DEBUG == True:
+                print output
+
+            print "Running Command: show interface description"
+            output = ssh_runcommand(remote_conn, \
                 "show interface description\n", \
                 recvbuffer=buffersize, \
-                recvsleep=sleeptime)
+                recvsleep=sleeptime,
+                    showcommand=True)
 
             if DEBUG == True:
                 print output
@@ -429,7 +444,8 @@ if __name__ == '__main__':
             output = ssh_runcommand(remote_conn, \
                     "show interface brief\n", \
                     recvbuffer=buffersize, \
-                    recvsleep=sleeptime)
+                    recvsleep=sleeptime,
+                    showcommand=True)
 
             if DEBUG == True:
                 print output
@@ -440,7 +456,8 @@ if __name__ == '__main__':
             output = ssh_runcommand(remote_conn, \
                     "show interface status\n", \
                     recvbuffer=buffersize, \
-                    recvsleep=sleeptime)
+                    recvsleep=sleeptime,
+                    showcommand=True)
 
             if DEBUG == True:
                 print output
