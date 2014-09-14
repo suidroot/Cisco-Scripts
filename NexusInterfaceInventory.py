@@ -372,11 +372,9 @@ if __name__ == '__main__':
     briefoutput = []
     statoutput = []
 
-
     buffersize=20000
     sleeptime=5
 
-    print "Running Command: show interface description"
     output = ssh_runcommand(remote_conn, \
         "show interface description\n", \
         recvbuffer=buffersize, \
@@ -388,7 +386,6 @@ if __name__ == '__main__':
 
     descoutput.append(output)
 
-    print "Running Command: show interface brief"
     output = ssh_runcommand(remote_conn, \
             "show interface brief\n", \
             recvbuffer=buffersize, \
@@ -400,7 +397,6 @@ if __name__ == '__main__':
 
     briefoutput.append(output)
 
-    print "Running Command: show interface status"
     output = ssh_runcommand(remote_conn, \
             "show interface status\n", \
             recvbuffer=buffersize, \
@@ -430,7 +426,6 @@ if __name__ == '__main__':
             if DEBUG == True:
                 print output
 
-            print "Running Command: show interface description"
             output = ssh_runcommand(remote_conn, \
                     "terminal length 0\n", \
                     recvbuffer=buffersize, \
@@ -440,19 +435,17 @@ if __name__ == '__main__':
             if DEBUG == True:
                 print output
 
-            print "Running Command: show interface description"
             output = ssh_runcommand(remote_conn, \
                 "show interface description\n", \
                 recvbuffer=buffersize, \
                 recvsleep=sleeptime,
-                    showcommand=True)
+                showcommand=True)
 
             if DEBUG == True:
                 print output
 
             descoutput.append(output)
 
-            print "Running Command: show interface brief"
             output = ssh_runcommand(remote_conn, \
                     "show interface brief\n", \
                     recvbuffer=buffersize, \
@@ -464,7 +457,6 @@ if __name__ == '__main__':
 
             briefoutput.append(output)
 
-            print "Running Command: show interface status"
             output = ssh_runcommand(remote_conn, \
                     "show interface status\n", \
                     recvbuffer=buffersize, \
