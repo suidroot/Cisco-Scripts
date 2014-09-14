@@ -7,7 +7,7 @@ import argparse
 import sys
 from networkstatesystem.vendors.ssh.sshhelper import *
 
-DEBUG = False
+DEBUG = True
 
 
 def initargs():
@@ -364,6 +364,7 @@ if __name__ == '__main__':
     buffersize=20000
     sleeptime=5
 
+    print "Running Command: show interface description"
     output = ssh_runcommand(remote_conn, \
         "show interface description\n", \
         recvbuffer=buffersize, \
@@ -374,6 +375,7 @@ if __name__ == '__main__':
 
     descoutput.append(output)
 
+    print "Running Command: show interface brief"
     output = ssh_runcommand(remote_conn, \
             "show interface brief\n", \
             recvbuffer=buffersize, \
@@ -384,6 +386,7 @@ if __name__ == '__main__':
 
     briefoutput.append(output)
 
+    print "Running Command: show interface status"
     output = ssh_runcommand(remote_conn, \
             "show interface status\n", \
             recvbuffer=buffersize, \
@@ -397,6 +400,8 @@ if __name__ == '__main__':
     # Collect Data from other VDCs 
     if vdclist != []:
         for nextvdc in vdclist:
+
+            print "Changing to VDC {0}".format(nextvdc)
             output = ssh_runcommand(remote_conn, \
                     "switchto vdc " + nextvdc + "\n", \
                     recvbuffer=2000, \
@@ -409,6 +414,7 @@ if __name__ == '__main__':
             if DEBUG == True:
                 print output
 
+            print "Running Command: show interface description"
             output = ssh_runcommand(remote_conn, \
                 "show interface description\n", \
                 recvbuffer=buffersize, \
@@ -419,6 +425,7 @@ if __name__ == '__main__':
 
             descoutput.append(output)
 
+            print "Running Command: show interface brief"
             output = ssh_runcommand(remote_conn, \
                     "show interface brief\n", \
                     recvbuffer=buffersize, \
@@ -429,6 +436,7 @@ if __name__ == '__main__':
 
             briefoutput.append(output)
 
+            print "Running Command: show interface status"
             output = ssh_runcommand(remote_conn, \
                     "show interface status\n", \
                     recvbuffer=buffersize, \
@@ -443,6 +451,7 @@ if __name__ == '__main__':
     # Process "show interface description" Output
     counter = 0
     for output in descoutput:
+        print 'Processing "show interface description" data for VDC {0}'.format(counter+1)
         descoutput = cleandata(output)
         parseshowintdesc(descoutput, counter + 1)
         counter += 1
@@ -450,6 +459,7 @@ if __name__ == '__main__':
     # Process "show interface brief" Output
     counter = 0
     for output in briefoutput:
+        print 'Processing "show interface brief" data for VDC {0}'.format(counter+1)
         briefoutput = cleandata(output)
         parseshowbr(briefoutput, counter + 1)
         counter += 1
@@ -457,6 +467,7 @@ if __name__ == '__main__':
     # Process "show interface status" Output
     counter = 0
     for output in statoutput:
+        print 'Processing "show interface status" data for VDC {0}'.format(counter+1)
         statoutput = cleandata(output)
         parseshowintstat(statoutput, counter + 1)
         counter += 1
