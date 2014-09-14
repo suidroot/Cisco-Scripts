@@ -272,8 +272,20 @@ def parseshowbr(data, vdc=1):
 
     for line in data:
         ifname = line[0]
-        try:
-            vlan = int(line[1])
+
+        # Ports set to Monitor Ports
+        if 'monitor' in line[1]: 
+            vlan = 0
+            mode, status = line[2].split(" ")
+            statusreason = line[3]
+            speedmode, portchannel = splitmode(line[4])
+
+        else:
+
+            try:
+                vlan = int(line[1])
+            except ValueError:
+                vlan = 0
 
             try:
                 mode, status = line[3].split(" ")
@@ -284,13 +296,6 @@ def parseshowbr(data, vdc=1):
                 status = line[4] 
                 statusreason = line[5]
                 speedmode, portchannel = splitmode(line[6])
-
-        except ValueError:
-            # vlan = line[1].split(" ")[1]
-            vlan = 0
-            mode, status = line[2].split(" ")
-            statusreason = line[3]
-            speedmode, portchannel = splitmode(line[4])
 
         if DEBUG == True:
             print line
