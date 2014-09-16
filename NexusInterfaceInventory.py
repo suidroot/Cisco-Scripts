@@ -29,16 +29,16 @@ def initargs():
     parser.add_argument('-v', '--vdc', \
         help='Additional VDCs')
     parser.add_argument('-c', '--csv', \
-        help='Create CSV file',
+        help='Create CSV file', \
         action='store_true')
-    
+
     arg = parser.parse_args()
 
     return arg
 
-class interface(object):
+class nxosinterface(object):
 
-    def __init__(self,ifname,vdc=1):
+    def __init__(self, ifname, vdc=1):
         self.ifname = ifname
         temp = ifname.split("Eth")[1]
         self.blade, self.portnum = temp.split("/")
@@ -46,7 +46,7 @@ class interface(object):
 
         # Initialize None values
         self.iftype = ''
-        self.speedmode = ''        
+        self.speedmode = ''
         self.speed = ''
         self.desc = ''
         self.vlan = ''
@@ -91,7 +91,7 @@ class interface(object):
             speedmode = 'Dedicated'
         elif speedmode == 'S':
             speedmode = 'Shared'
-        
+
         self.speedmode = speedmode
 
     def setdescription(self, desc):
@@ -134,21 +134,22 @@ class interface(object):
             self.vdc = int(vdc)
         except ValueError:
             print "Invalid VDC must be Integer"
-            self.vdc = None        
+            self.vdc = None
 
     def returnheader(self):
         """ Return header matching items in returnlist() """
 
-        return [ 'Blade Number', 'Port Number', 'ifName', 'Type', 'Speed', 
-        'Description', 'VLAN', 'Mode', 'Status', 'Status Reason', 'Speed Mode', 
-        'Port Channel', 'Connector Type', 'VDC', 'ASIC' ]
+        return ['Blade Number', 'Port Number', 'ifName', 'Type', 'Speed', \
+        'Description', 'VLAN', 'Mode', 'Status', 'Status Reason', 'Speed Mode',\
+        'Port Channel', 'Connector Type', 'VDC', 'ASIC']
 
     def returnlist(self):
         """ Return list of all intrface values """
 
-        return [ self.blade, self.portnum, self.ifname, self.iftype, self.speed, 
-            self.desc, self.vlan, self.mode, self.status, self.statusreason, self.speedmode, 
-            self.portchannel, self.connectortype, self.vdc, 'na' ]
+        return [self.blade, self.portnum, self.ifname, self.iftype, self.speed,\
+            self.desc, self.vlan, self.mode, self.status, self.statusreason, \
+            self.speedmode, self.portchannel, self.connectortype, self.vdc, \
+            'na']
 
 def loadfile(filename):
 
@@ -172,9 +173,9 @@ def loadfile(filename):
 
 
 def cleandata(filelist):
-    """ Divide data delinitated by 2 spaces into columns and 
+    """ Divide data delinitated by 2 spaces into columns and
         strip leading and trailing white space.
-        
+
         Return only interface with prefix "Eth"
 
         Remove Headers
@@ -214,10 +215,11 @@ def cleandata(filelist):
 def parseshowintdesc(data, vdc=1):
 
     """
-    Collect ifname, iftype, ifspeed, ifdescription from "show interface description" output
+    Collect ifname, iftype, ifspeed, ifdescription from
+    "show interface description" output
 
     Port          Type   Speed   Description
-    -------------------------------------------------------------------------------
+    ----------------------------------------------------------------------------
     Eth1/1        eth    1000    vPC peer keepalive link
 
     """
@@ -238,7 +240,7 @@ def parseshowintdesc(data, vdc=1):
             allinterfaces[ifname].setspeed(ifspeed)
             allinterfaces[ifname].setdescription(ifdescription)
         except KeyError:
-            allinterfaces[ifname] = interface(ifname, vdc)
+            allinterfaces[ifname] = nxosinterface(ifname, vdc)
             allinterfaces[ifname].settype(iftype)
             allinterfaces[ifname].setspeed(ifspeed)
             allinterfaces[ifname].setdescription(ifdescription)
@@ -246,7 +248,7 @@ def parseshowintdesc(data, vdc=1):
 
 def parseshowbr(data, vdc=1):
     """
-    Collect vlan, mode, status, statusreason, speedmode, and portchannel 
+    Collect vlan, mode, status, statusreason, speedmode, and portchannel
     from "show interface brief" output
 
     --------------------------------------------------------------------------------
@@ -307,7 +309,6 @@ def parseshowbr(data, vdc=1):
 
         # Try frust to split column 3 into 2 values, if column 3 
         # only has single word follow alternate flowe
-        
 
         if DEBUG == True:
             print vlan, mode, status, statusreason, speedmode, portchannel
@@ -320,7 +321,7 @@ def parseshowbr(data, vdc=1):
             allinterfaces[ifname].setspeedmode(speedmode)
             allinterfaces[ifname].setportchannel(portchannel)
         except KeyError:
-            allinterfaces[ifname] = interface(ifname, vdc)
+            allinterfaces[ifname] = nxosinterface(ifname, vdc)
             allinterfaces[ifname].setvlan(vlan)
             allinterfaces[ifname].setmode(mode)
             allinterfaces[ifname].setstatus(status)
@@ -356,7 +357,7 @@ def parseshowintstat(data, vdc=1):
         try:
             allinterfaces[ifname].setconnectortype(line[-1])
         except KeyError:
-            allinterfaces[ifname] = interface(ifname, vdc)
+            allinterfaces[ifname] = nxosinterface(ifname, vdc)
             allinterfaces[ifname].setconnectortype(line[-1])
 
 
@@ -365,7 +366,8 @@ def writecsvfile(ip, datalist):
     filename = ip + '.csv'
 
     with open(filename, 'wb') as csvfile:
-        spamwriter = csv.writer(csvfile, quotechar='"', quoting=csv.QUOTE_MINIMAL)
+        spamwriter = csv.writer(csvfile, quotechar='"', \
+            quoting=csv.QUOTE_MINIMAL)
 
         for line in datalist:
             spamwriter.writerow(line)
@@ -398,7 +400,8 @@ if __name__ == '__main__':
             showcommand=False)
 
         print "\n".join(output)
-        vdc = raw_input("Enter a comma seperated list of non-detault VDCs or Press Enter: ")
+        vdc = raw_input("Enter a comma seperated list of non-detault \
+            VDCs or Press Enter: ")
 
     vdclist = vdc.split(",")
     for counter in range(len(vdclist)):
@@ -455,7 +458,7 @@ if __name__ == '__main__':
             output = ssh_runcommand(remote_conn, \
                     "switchto vdc " + nextvdc + "\n", \
                     recvbuffer=2000, \
-                    recvsleep=2,
+                    recvsleep=2, \
                     showcommand=True)
 
             if "Invalid command" in "\n".join(output):
@@ -468,7 +471,7 @@ if __name__ == '__main__':
             output = ssh_runcommand(remote_conn, \
                     "terminal length 0\n", \
                     recvbuffer=buffersize, \
-                    recvsleep=sleeptime,
+                    recvsleep=sleeptime, \
                     showcommand=True)
 
             if DEBUG == True:
@@ -477,7 +480,7 @@ if __name__ == '__main__':
             output = ssh_runcommand(remote_conn, \
                 "show interface description\n", \
                 recvbuffer=buffersize, \
-                recvsleep=sleeptime,
+                recvsleep=sleeptime, \
                 showcommand=True)
 
             if DEBUG == True:
@@ -488,7 +491,7 @@ if __name__ == '__main__':
             output = ssh_runcommand(remote_conn, \
                     "show interface brief\n", \
                     recvbuffer=buffersize, \
-                    recvsleep=sleeptime,
+                    recvsleep=sleeptime, \
                     showcommand=True)
 
             if DEBUG == True:
@@ -499,7 +502,7 @@ if __name__ == '__main__':
             output = ssh_runcommand(remote_conn, \
                     "show interface status\n", \
                     recvbuffer=buffersize, \
-                    recvsleep=sleeptime,
+                    recvsleep=sleeptime, \
                     showcommand=True)
 
             if DEBUG == True:
@@ -510,7 +513,7 @@ if __name__ == '__main__':
             output = ssh_runcommand(remote_conn, \
                     "switchback\n", \
                     recvbuffer=2000, \
-                    recvsleep=2,
+                    recvsleep=2, \
                     showcommand=True)
 
             if DEBUG == True:
@@ -520,7 +523,8 @@ if __name__ == '__main__':
     # Process "show interface description" Output
     counter = 0
     for output in descoutput:
-        print 'Processing "show interface description" data for VDC {0}'.format(counter+1)
+        print 'Processing "show interface description" data for \
+            VDC {0}'.format(counter+1)
         descoutput = cleandata(output)
         parseshowintdesc(descoutput, counter + 1)
         counter += 1
@@ -528,7 +532,8 @@ if __name__ == '__main__':
     # Process "show interface brief" Output
     counter = 0
     for output in briefoutput:
-        print 'Processing "show interface brief" data for VDC {0}'.format(counter+1)
+        print 'Processing "show interface brief" data for VDC \
+            {0}'.format(counter+1)
         briefoutput = cleandata(output)
         parseshowbr(briefoutput, counter + 1)
         counter += 1
@@ -536,7 +541,8 @@ if __name__ == '__main__':
     # Process "show interface status" Output
     counter = 0
     for output in statoutput:
-        print 'Processing "show interface status" data for VDC {0}'.format(counter+1)
+        print 'Processing "show interface status" data for VDC \
+            {0}'.format(counter+1)
         statoutput = cleandata(output)
         parseshowintstat(statoutput, counter + 1)
         counter += 1
@@ -555,7 +561,7 @@ if __name__ == '__main__':
         if DEBUG == True:
             print csvlist
 
-        writecsvfile(ip,csvlist)
+        writecsvfile(ip, csvlist)
 
     else:
         # Display Data
