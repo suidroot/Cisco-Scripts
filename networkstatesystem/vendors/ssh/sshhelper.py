@@ -54,7 +54,18 @@ def sshconnect(sship, username, password, devtype, enable=''):
 
     return remote_conn_pre, remote_conn
 
-def ssh_runcommand(remote_conn, command, recvbuffer=30000, \
+def ssh_get_prompt(remote_conn):
+    ''' Gather the Prompt by hitting enter and collecting the last line '''
+
+    remote_conn.send("\n")
+
+    sessionoutput = remote_conn.recv(1024)
+    sessionlist = sessionoutput.split("\n")
+    print sessionlist[-1]
+
+    return sessionlist[-1]
+
+def ssh_runcommand(remote_conn, command, prompt='', recvbuffer=30000, \
     recvsleep=10, showcommand=False):
     ''' Send command to device and return list of data '''
 
@@ -63,8 +74,16 @@ def ssh_runcommand(remote_conn, command, recvbuffer=30000, \
         print "Sending the command: {0}".format(command)
 
     remote_conn.send(command + "\n")
-    sleep(recvsleep)
-    sessionoutput = remote_conn.recv(recvbuffer)
-    sessionlist = sessionoutput.split("\n")
+
+    if prompt:
+        sessionoutput = ''
+        while not prompt in sessionoutput:
+            sessionoutput += remote_conn.recv(1024)
+            print sessionoutput
+        sessionlist = sessionoutput.split("\n")
+    else:
+        sleep(recvsleep)
+        sessionoutput = remote_conn.recv(recvbuffer)
+        sessionlist = sessionoutput.split("\n") 
 
     return sessionlist
