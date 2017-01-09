@@ -4,9 +4,9 @@ stolen from https://pynet.twb-tech.com/blog/python/paramiko-ssh-part1.html
 """
 
 from networkstatesystem.vendors.ssh.sshhelper import *
-import argparse
 from sys import exit
 
+import argparse
 
 def initargs():
     """ initialize variables with command-line arguments """

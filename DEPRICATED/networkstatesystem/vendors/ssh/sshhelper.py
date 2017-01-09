@@ -50,7 +50,8 @@ def sshconnect(sship, username, password, devtype, enable=''):
         remote_conn.send(enable+"\n")
 
     # Turn off paging
-    disable_paging(remote_conn, devtype)
+    if devtype != 'none':
+        disable_paging(remote_conn, devtype)
 
     return remote_conn_pre, remote_conn
 
@@ -61,9 +62,11 @@ def ssh_get_prompt(remote_conn):
 
     sessionoutput = remote_conn.recv(1024)
     sessionlist = sessionoutput.split("\n")
-    print sessionlist[-1]
 
-    return sessionlist[-1]
+    returnprompt = sessionlist[-1].strip()
+    print returnprompt
+
+    return returnprompt
 
 def ssh_runcommand(remote_conn, command, prompt='', recvbuffer=30000, \
     recvsleep=10, showcommand=False):
@@ -73,13 +76,25 @@ def ssh_runcommand(remote_conn, command, prompt='', recvbuffer=30000, \
     if showcommand:
         print "Sending the command: {0}".format(command)
 
-    remote_conn.send(command + "\n")
+    sent = remote_conn.send(command + "\n")
 
     if prompt:
         sessionoutput = ''
+        # igorelen = len(prompt)*8+sent
+        # print igorelen
+        # ignore = remote_conn.recv(igorelen)
+        # print "ignore: " + ignore + "end"
+
+        print prompt
+
+        sessionoutpu1t = remote_conn.recv(1024)
+        print "'" + sessionoutpu1t + "'"
+
+        print "start whjile"
         while not prompt in sessionoutput:
             sessionoutput += remote_conn.recv(1024)
-            print sessionoutput
+            # print sessionoutput
+        print len(sessionoutput)
         sessionlist = sessionoutput.split("\n")
     else:
         sleep(recvsleep)

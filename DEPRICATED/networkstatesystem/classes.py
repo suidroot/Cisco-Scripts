@@ -2,7 +2,7 @@
 """
 This Module conatins all of the information defining Network elements
 """
-
+from __future__ import division
 import json
 import prettytable
 
@@ -261,6 +261,8 @@ class device(object):
         ifOutDiscards = 0
         ifOutErrors = 0
         ifOutQLen = 0
+        ifSpecific = 0
+
 
         for loop_ifIndex in interfacetable:
             for ifAttr in interfacetable[loop_ifIndex]:
@@ -287,9 +289,9 @@ class device(object):
                 elif ifAttr == 11:
                     ifUcastPkts = interfacetable[loop_ifIndex][ifAttr]
                 elif ifAttr == 12:
-                    ifInNUcastPkt = interfacetable[loop_ifIndex][ifAttr]
+                    ifInNUcastPkts = interfacetable[loop_ifIndex][ifAttr]
                 elif ifAttr == 13:
-                    ifInDiscard = interfacetable[loop_ifIndex][ifAttr]
+                    ifInDiscards = interfacetable[loop_ifIndex][ifAttr]
                 elif ifAttr == 14:
                     ifInErrors = interfacetable[loop_ifIndex][ifAttr]
                 elif ifAttr == 15:
@@ -299,11 +301,11 @@ class device(object):
                 elif ifAttr == 17:
                     ifOutUcastPkts = interfacetable[loop_ifIndex][ifAttr]
                 elif ifAttr == 18:
-                    ifOutNUcastPkt = interfacetable[loop_ifIndex][ifAttr]
+                    ifOutNUcastPkts = interfacetable[loop_ifIndex][ifAttr]
                 elif ifAttr == 19:
-                    ifOutDiscard = interfacetable[loop_ifIndex][ifAttr]
+                    ifOutDiscards = interfacetable[loop_ifIndex][ifAttr]
                 elif ifAttr == 20:
-                    ifOutError = interfacetable[loop_ifIndex][ifAttr]
+                    ifOutErrors = interfacetable[loop_ifIndex][ifAttr]
                 elif ifAttr == 21:
                     ifOutQLen = interfacetable[loop_ifIndex][ifAttr]
                 elif ifAttr == 22:
@@ -334,7 +336,7 @@ class device(object):
         ipCidrRouteType = 0
         ipCidrRouteProto = 0
         ipCidrRouteAge = 0
-        ipCidrRouteInf = 0
+        ipCidrRouteInfo = 0
 
         for loop_rtIndex in routingtable:
             for ifAttr in routingtable[loop_rtIndex]:
@@ -377,7 +379,7 @@ class device(object):
                 ipCidrRouteMetric5, ipCidrRouteStatus, ipCidrRouteMask, \
                 ipCidrRouteTos, ipCidrRouteNextHop, ipCidrRouteIfIndex, \
                 ipCidrRouteType, ipCidrRouteProto, ipCidrRouteAge, \
-                ipCidrRouteInf)
+                ipCidrRouteInfo)
 
     def printroutingtable(self, outformat):
         """ Display Routing table """
@@ -453,29 +455,35 @@ class device(object):
         numberup = 0
         numberdown = 0
         status = 0
+        total = 0
+
 
         for ifindex in sorted(interfacedata):
+
+            total += 1
+
             if interfacedata[ifindex]._ifAdminStatus < interfacedata[ifindex]._ifOperStatus:
                 status = interfacedata[ifindex]._ifOperStatus
             else:
                 status = interfacedata[ifindex]._ifAdminStatus
 
             if status == '1':
-                numberup = int(numberup + 1)
+                numberup += 1
             else:
-                numberdown = int(numberdown + 1)
+                numberdown += 1
 
-        percentfree = (numberdown / (numberup + numberdown))*100
+        percentfree = int((numberdown / total) * 100)
 
         if outformat == 'csv':
-            print 'hostname,up,down,percent'
-            print '{0},{1},{2},{3}'.format(hostname, numberup, numberdown, \
-                percentfree)
+            print 'hostname,up,down,percent,total'
+            print '{0},{1},{2},{3},{4}'.format(hostname, numberup, numberdown, \
+                percentfree,total)
         else:
             print "Hostname: {0}".format(hostname)
-            print "Total Number up: {0}".format(numberup)
-            print "Total Number down: {0}".format(numberdown)
-            print "Percent Free: {0}".format(percentfree)
+            print "Total Ports up: {0}".format(numberup)
+            print "Total Ports down: {0}".format(numberdown)
+            print "Total Ports: {0}".format(total)
+            print "Percent Free: {0} %".format(percentfree)
 
 
     def printinterfacestats(self, outformat):
@@ -616,5 +624,140 @@ class device(object):
         #print currentdevice
         return json.dumps(currentdevice, sort_keys=True, indent=4, \
             separators=(',', ': '))
+
+
+
+class cdp_neighbor(object):
+
+    # http://www.oidview.com/mibs/9/CISCO-CDP-MIB.html
+    # cdpCacheIfIndex cdpCacheIfIndex 1.3.6.1.4.1.9.9.23.1.2.1.1.1
+    # cdpCacheVTPMgmtDomain cdpCacheVTPMgmtDomain 1.3.6.1.4.1.9.9.23.1.2.1.1.10
+    # cdpCacheNativeVLAN cdpCacheNativeVLAN   1.3.6.1.4.1.9.9.23.1.2.1.1.11
+    # cdpCacheDuplex cdpCacheDuplex   1.3.6.1.4.1.9.9.23.1.2.1.1.12
+    # cdpCacheApplianceID cdpCacheApplianceID 1.3.6.1.4.1.9.9.23.1.2.1.1.13
+    # cdpCacheVlanID cdpCacheVlanID   1.3.6.1.4.1.9.9.23.1.2.1.1.14
+    # cdpCachePowerConsumption cdpCachePowerConsumption   1.3.6.1.4.1.9.9.23.1.2.1.1.15
+    # cdpCacheMTU cdpCacheMTU 1.3.6.1.4.1.9.9.23.1.2.1.1.16
+    # cdpCacheSysName cdpCacheSysName 1.3.6.1.4.1.9.9.23.1.2.1.1.17
+    # cdpCacheSysObjectID cdpCacheSysObjectID 1.3.6.1.4.1.9.9.23.1.2.1.1.18
+    # cdpCachePrimaryMgmtAddrType cdpCachePrimaryMgmtAddrType 1.3.6.1.4.1.9.9.23.1.2.1.1.19
+    # cdpCacheDeviceIndex cdpCacheDeviceIndex 1.3.6.1.4.1.9.9.23.1.2.1.1.2
+    # cdpCachePrimaryMgmtAddr cdpCachePrimaryMgmtAddr 1.3.6.1.4.1.9.9.23.1.2.1.1.20
+    # cdpCacheSecondaryMgmtAddrType cdpCacheSecondaryMgmtAddrType 1.3.6.1.4.1.9.9.23.1.2.1.1.21
+    # cdpCacheSecondaryMgmtAddr cdpCacheSecondaryMgmtAddr 1.3.6.1.4.1.9.9.23.1.2.1.1.22
+    # cdpCachePhysLocation cdpCachePhysLocation   1.3.6.1.4.1.9.9.23.1.2.1.1.23
+    # cdpCacheLastChange cdpCacheLastChange   1.3.6.1.4.1.9.9.23.1.2.1.1.24
+    # cdpCacheAddressType cdpCacheAddressType 1.3.6.1.4.1.9.9.23.1.2.1.1.3
+    # cdpCacheAddress cdpCacheAddress 1.3.6.1.4.1.9.9.23.1.2.1.1.4
+    # cdpCacheVersion cdpCacheVersion 1.3.6.1.4.1.9.9.23.1.2.1.1.5
+    # cdpCacheDeviceId cdpCacheDeviceId   1.3.6.1.4.1.9.9.23.1.2.1.1.6
+    # cdpCacheDevicePort cdpCacheDevicePort   1.3.6.1.4.1.9.9.23.1.2.1.1.7
+    # cdpCachePlatform cdpCachePlatform   1.3.6.1.4.1.9.9.23.1.2.1.1.8
+    # cdpCacheCapabilities cdpCacheCapabilities   1.3.6.1.4.1.9.9.23.1.2.1.1.9
+
+
+    def __init__(self):
+
+        self.cdpCacheIfIndex = "" # 1
+        self.cdpCacheDeviceIndex = "" # 2
+        self.cdpCacheAddressType = "" # 3 - Type of IP
+        self.cdpCacheAddress = "" # 4 - IP Address
+        self.cdpCacheVersion = "" # 5 - OS Version
+        self.cdpCacheDeviceId = "" # 6 - Device Hostname
+        self.cdpCacheDevicePort = "" # 7 - Interface
+        self.cdpCachePlatform = "" # 8 - Platform
+        self.cdpCacheCapabilities = "" # 9 - Capabliity TLVs
+        self.cdpCacheVTPMgmtDomain = "" # 10 - VTP Domain
+        self.cdpCacheNativeVLAN = "" # 11 - Native VLAN
+        self.cdpCacheDuplex = "" # 12 - Interface Duplex
+        self.cdpCacheApplianceID = "" # 13
+        self.cdpCacheVlanID = ""
+        self.cdpCachePowerConsumption = "" # 17
+        self.cdpCacheMTU = "" # 18
+        self.cdpCacheSysName = "" # 19
+        self.cdpCacheSysObjectID = "" # 20
+        self.cdpCachePrimaryMgmtAddrType = "" # 21
+        self.cdpCachePrimaryMgmtAddr = "" # 22
+        self.cdpCacheSecondaryMgmtAddrType = "" # 21
+        self.cdpCacheSecondaryMgmtAddr = "" # 22
+        self.cdpCachePhysLocation = "" # 23
+        self.cdpCacheLastChange = "" # 24
+        self.osversion = ""
+        self.manufacturer = ""
+        self.equipmentmake = ""
+        self.version = ""
+
+
+    def __repr__(self):
+        pass
+
+    def __str__(self):
+        pass
+
+    def snmpsetvalue(self, counter, value):
+
+        if counter == 1:
+            self.cdpCacheIfIndex = value
+        elif counter == 2:
+            self.cdpCacheDeviceIndex = value
+        elif counter == 3:
+            self.cdpCacheAddressType = value
+        elif counter == 4:
+            self.cdpCacheAddress = value
+        elif counter == 5:
+            self.cdpCacheVersion = value
+        elif counter == 6:
+            self.cdpCacheDeviceId = value
+        elif counter == 7:
+            self.cdpCacheDevicePort = value
+        elif counter == 8:
+            self.cdpCachePlatform = value
+        elif counter == 9:
+            self.cdpCacheCapabilities = value
+        elif counter == 10:
+            self.cdpCacheVTPMgmtDomain = value
+        elif counter == 11:
+            self.cdpCacheNativeVLAN = value
+        elif counter == 12:
+            self.cdpCacheDuplex = value
+        elif counter == 13:
+            self.cdpCacheApplianceID = value
+        elif counter == 14:
+            self.cdpCacheVlanID = value
+        elif counter == 15:
+            self.cdpCachePowerConsumption = value
+        elif counter == 16:
+            self.cdpCacheMTU = value
+        elif counter == 17:
+            self.cdpCacheSysName = value
+        elif counter == 18:
+            self.cdpCacheSysObjectID = value
+        elif counter == 19:
+            self.cdpCachePrimaryMgmtAddrType = value
+        elif counter == 20:
+            self.cdpCachePrimaryMgmtAddr = value
+        elif counter == 21:
+            self.cdpCacheSecondaryMgmtAddrType = value
+        elif counter == 22:
+            self.cdpCacheSecondaryMgmtAddr = value
+        elif counter == 23:
+            self.cdpCachePhysLocation = value
+        elif counter == 24:
+            self.cdpCacheLastChange = value
+
+    def addneighbor(self,stuff):
+        # OID .1.3.6.1.4.1.9.9.23.1.2.1.1.
+        pass
+
+    def addosverson(self, line):
+
+            if "Cisco IOS Software" in line:
+                # Cisco IOS Software, 3600 Software (C3640-IK9S-M), Version 12.4(25d), RELEASE SOFTWARE (fc1)
+                ostype, osplatflorm, osversion, release = line.split(", ")
+                osversion = osversion.split("Version ")[1]
+            elif "Vyatta Core" in line:
+                # Vyatta Router running on Vyatta Core 6.6 R1
+                osplatform, osversion = line.split(" running on ")
+                osversion = osversion.split("Vyatta Core ")[1]
 
 

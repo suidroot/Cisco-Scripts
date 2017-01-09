@@ -8,7 +8,7 @@ import sys
 import csv
 from networkstatesystem.vendors.ssh.sshhelper import *
 
-DEBUG = False
+DEBUG = True
 
 
 def initargs():
@@ -389,19 +389,23 @@ if __name__ == '__main__':
 
     remote_conn_pre, remote_conn = \
     sshconnect(ip, username, password, 'ios', enable)
+    theprompt = ssh_get_prompt(remote_conn)
+
+    print "Device Prompt: " + theprompt
 
     vdclist = []
-
     if vdc == None:
+
+        print "Show VDC Output"
+
         output = ssh_runcommand(remote_conn, \
             "show vdc", \
-            recvbuffer=5000, \
-            recvsleep=2,
-            showcommand=False)
+            prompt=theprompt, \
+            showcommand=True)
 
-        print "\n".join(output)
-        vdc = raw_input("Enter a comma seperated list of non-detault \
-            VDCs or Press Enter: ")
+        print output
+        # print "\n".join(output)
+        vdc = raw_input("Enter a comma seperated list of non-detault VDCs or Press Enter: ")
 
     vdclist = vdc.split(",")
     for counter in range(len(vdclist)):
@@ -417,10 +421,11 @@ if __name__ == '__main__':
     buffersize=20000
     sleeptime=5
 
+    output = ''
+
     output = ssh_runcommand(remote_conn, \
-        "show interface description\n", \
-        recvbuffer=buffersize, \
-        recvsleep=sleeptime,
+        "show interface description", \
+        prompt=theprompt, \
         showcommand=True)
 
     if DEBUG == True:
@@ -429,9 +434,8 @@ if __name__ == '__main__':
     descoutput.append(output)
 
     output = ssh_runcommand(remote_conn, \
-            "show interface brief\n", \
-            recvbuffer=buffersize, \
-            recvsleep=sleeptime,
+            "show interface brief", \
+            prompt=theprompt, \
             showcommand=True)
 
     if DEBUG == True:
@@ -440,9 +444,8 @@ if __name__ == '__main__':
     briefoutput.append(output)
 
     output = ssh_runcommand(remote_conn, \
-            "show interface status\n", \
-            recvbuffer=buffersize, \
-            recvsleep=sleeptime,
+            "show interface status", \
+            prompt=theprompt, \
             showcommand=True)
     
     if DEBUG == True:
@@ -456,7 +459,7 @@ if __name__ == '__main__':
 
             print "Changing to VDC {0}".format(nextvdc)
             output = ssh_runcommand(remote_conn, \
-                    "switchto vdc " + nextvdc + "\n", \
+                    "switchto vdc " + nextvdc, \
                     recvbuffer=2000, \
                     recvsleep=2, \
                     showcommand=True)
@@ -468,19 +471,20 @@ if __name__ == '__main__':
             if DEBUG == True:
                 print output
 
+            theprompt = ssh_get_prompt(remote_conn)
+
+
             output = ssh_runcommand(remote_conn, \
-                    "terminal length 0\n", \
-                    recvbuffer=buffersize, \
-                    recvsleep=sleeptime, \
+                    "terminal length 0", \
+                    prompt=theprompt, \
                     showcommand=True)
 
             if DEBUG == True:
                 print output
 
             output = ssh_runcommand(remote_conn, \
-                "show interface description\n", \
-                recvbuffer=buffersize, \
-                recvsleep=sleeptime, \
+                "show interface description", \
+                prompt=theprompt, \
                 showcommand=True)
 
             if DEBUG == True:
@@ -489,9 +493,8 @@ if __name__ == '__main__':
             descoutput.append(output)
 
             output = ssh_runcommand(remote_conn, \
-                    "show interface brief\n", \
-                    recvbuffer=buffersize, \
-                    recvsleep=sleeptime, \
+                    "show interface brief", \
+                    prompt=theprompt, \
                     showcommand=True)
 
             if DEBUG == True:
@@ -500,9 +503,8 @@ if __name__ == '__main__':
             briefoutput.append(output)
 
             output = ssh_runcommand(remote_conn, \
-                    "show interface status\n", \
-                    recvbuffer=buffersize, \
-                    recvsleep=sleeptime, \
+                    "show interface status", \
+                    prompt=theprompt, \
                     showcommand=True)
 
             if DEBUG == True:
@@ -511,7 +513,7 @@ if __name__ == '__main__':
             statoutput.append(output)
 
             output = ssh_runcommand(remote_conn, \
-                    "switchback\n", \
+                    "switchback", \
                     recvbuffer=2000, \
                     recvsleep=2, \
                     showcommand=True)
@@ -523,8 +525,7 @@ if __name__ == '__main__':
     # Process "show interface description" Output
     counter = 0
     for output in descoutput:
-        print 'Processing "show interface description" data for \
-            VDC {0}'.format(counter+1)
+        print 'Processing "show interface description" data for VDC {0}'.format(counter+1)
         descoutput = cleandata(output)
         parseshowintdesc(descoutput, counter + 1)
         counter += 1
@@ -532,8 +533,7 @@ if __name__ == '__main__':
     # Process "show interface brief" Output
     counter = 0
     for output in briefoutput:
-        print 'Processing "show interface brief" data for VDC \
-            {0}'.format(counter+1)
+        print 'Processing "show interface brief" data for VDC {0}'.format(counter+1)
         briefoutput = cleandata(output)
         parseshowbr(briefoutput, counter + 1)
         counter += 1
@@ -541,8 +541,7 @@ if __name__ == '__main__':
     # Process "show interface status" Output
     counter = 0
     for output in statoutput:
-        print 'Processing "show interface status" data for VDC \
-            {0}'.format(counter+1)
+        print 'Processing "show interface status" data for VDC {0}'.format(counter+1)
         statoutput = cleandata(output)
         parseshowintstat(statoutput, counter + 1)
         counter += 1

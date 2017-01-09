@@ -31,9 +31,8 @@ def main(args):
     ip = args.ip
     username = args.username
     password = args.password
-    enable = ''
 
-    remote_conn_pre, remote_conn = sshconnect(ip, username, password, 'juniper', enable)
+    remote_conn_pre, remote_conn = sshconnect(ip, username, password, 'juniper', '')
     sessionlist = ssh_runcommand(remote_conn, "show security flow session brief")
 
     session = {}
