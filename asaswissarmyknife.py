@@ -1,7 +1,15 @@
 #!/usr/bin/python3
-""" This is a collection of methods to interest with a Cisco ASA """
+"""
+This is a collection of methods to interest with a Cisco ASA
 
-from sys import exit
+Currently a work in progress and prototype
+
+Author: Ben Mason
+
+"""
+
+# from sys import exit
+from random import randint
 from netmiko import ConnectHandler
 import ipaddress
 from prettyprint import pp
@@ -16,24 +24,26 @@ ASA_CREDENTIALS = {
     'verbose': True       # optional, defaults to False
 }
 
-SOURCEIP = '1.1.1.1'
-DESTIP = '10.0.0.10'
-PROTOCOL = 'tcp'
-SOURCEPORT = '2345'
-DESTPORT = '23'
-MYCOMMAND = "sh route"
+TRACEDATA = {
+    'inputinterface' : 'outside',
+    'sourceip' : '1.1.1.1',
+    'destip' : '10.0.0.10',
+    'protocol' : 'tcp',
+    # 'sourceport' : '2345',
+    'destport' : '23'
+}
 
 class Device(object):
-    """ Object defines base devie functions """
+    """ Object defines base device functions, levereges NetMiko"""
 
     def __init__(self):
         self.net_connect = None
-        # pass
 
     def connect(self, devicedef):
         """ Setup connection to device """
-        # print (devicedef)
         self.net_connect = ConnectHandler(**devicedef)
+
+        return self.net_connect
 
     def runcommand(self, mycommand):
         """ Run arbitrary command on device and return text output """
@@ -42,77 +52,62 @@ class Device(object):
 
         return output
 
-
-class RoutingTable(object):
+class ASARoutingTable(object):
     """ This object represents the device's route table """
 
     def __init__(self):
         self.routingtable = []
+        self.showroutecommand = "show route"
 
-    def setroutingtable(self, commandoutput):
+    def setroutingtable(self, mydevice, commandoutput=None):
         """ Parse Routing table text and create List of disctionaries """
+
+        print "Collecting route table"
+        commandoutput = mydevice.runcommand(self.showroutecommand)
 
         outputlist = commandoutput.split('\n')
 
         for currentline in outputlist[10:]:
             currentline = currentline.split()
-            # print (currentline)
 
             if len(currentline) > 0:
                 routetype = currentline[0]
+                address_pair = ipaddress.ip_network(currentline[1]+'/'+currentline[2])
 
                 if routetype == 'L':
-                    address_pair = ipaddress.ip_network(currentline[1]+'/'+currentline[2])
-                    interface = currentline[6]
-
                     current_route = {'routetype':routetype, \
                     'address_pair':address_pair, \
-                    'interface': interface, \
+                    'interface': currentline[6], \
                     'default':'no'}
-
                 elif routetype == 'C':
-                    address_pair = ipaddress.ip_network(currentline[1]+'/'+currentline[2])
-                    interface = currentline[6]
-
                     current_route = {'routetype':routetype, \
                     'address_pair':address_pair, \
-                    'interface': interface, \
+                    'interface': currentline[6], \
                     'default':'no'}
-
                 elif routetype == 'S*':
                     # [u'S*', u'0.0.0.0', u'0.0.0.0', u'[1/0]', u'via', u'10.0.0.6,', u'outside']
-                    address_pair = ipaddress.ip_network(currentline[1]+'/'+currentline[2])
-                    interface = currentline[6]
-                    metric = currentline[3]
-                    nexthop = currentline[4]
-                    interface = currentline[6]
-
                     current_route = {'routetype':routetype, \
                     'address_pair': address_pair, \
-                    'interface': interface, \
+                    'interface': currentline[6], \
                     'default': 'yes', \
-                    'metric': metric, \
-                    'nexthop': nexthop}
+                    'metric': currentline[3], \
+                    'nexthop': currentline[4]}
                 else:
-                # [u'S', u'3.3.3.0', u'255.255.255.252', u'[1/0]', u'via', u'10.0.0.6,', u'outside']
-                    address_pair = ipaddress.ip_network(currentline[1]+'/'+currentline[2])
-                    interface = currentline[6]
-                    metric = currentline[3]
-                    nexthop = currentline[4]
-                    interface = currentline[6]
-
-                    current_route = {'routetype':routetype, \
+                    # [u'S', u'3.3.3.0', u'255.255.255.252', u'[1/0]', u'via', u'10.0.0.6,', u'outside']
+                    current_route = {'routetype': routetype, \
                     'address_pair': address_pair, \
-                    'interface': interface, \
+                    'interface': currentline[6], \
                     'default': 'no', \
-                    'metric': metric, \
-                    'nexthop': nexthop}
+                    'metric': currentline[3], \
+                    'nexthop': currentline[4]}
 
                 self.routingtable.append(current_route)
 
+
+        return self.routingtable
+
     def whatinterface(self, ipaddr, nondefault=False):
         """ Determine what Interface a IP address exits """
-
         addr4 = ipaddress.ip_address(unicode(ipaddr))
         outboundinterface = ""
 
@@ -140,11 +135,22 @@ class RoutingTable(object):
             print line
             # pp(line)
 
-def runpackettracer(mydevice, interface, protocol, srcip, srcport, dstip, \
-dstport):
+def runpackettracer(mydevice, tracedata):
     """ Run packet tracer command and return output in disctionary format """
-
     import xmltodict
+
+    interface = tracedata['inputinterface']
+    protocol = tracedata['protocol']
+    srcip = tracedata['sourceip']
+
+    if not tracedata.has_key('sourceport'):
+        srcport = str(randint(1025, 65000))
+    else:
+        srcport = tracedata['sourceport']
+
+    dstip = tracedata['destip']
+    dstport = tracedata['destport']
+
 
     phases = []
 
@@ -167,13 +173,11 @@ dstport):
 
 def addtoconfig(thebuffer, totallist):
 
-    # lines = thebuffer.split("\n")
     lines = thebuffer
     lines = lines[1:]
     lines = lines[:-1]
 
     for line in lines:
-        # print line
         totallist.append(line)
 
     return totallist
@@ -259,9 +263,7 @@ def tunnelconfigcollector(mydevice, tunnelip='', mapnumber=''):
     else:
         exit("No correct Search type, this should not happen")
 
-    # print "\n\n The Whole thing\n"
     print "\n".join(completeconfig)
-
 
 ###############################################
 def main():
@@ -270,21 +272,17 @@ def main():
     mydevice = Device()
     mydevice.connect(ASA_CREDENTIALS)
 
-    print "Run command {0}".format(MYCOMMAND)
-    output = mydevice.runcommand(MYCOMMAND)
-
-    myroutingtable = RoutingTable()
-    myroutingtable.setroutingtable(output)
+    myroutingtable = ASARoutingTable()
+    myroutingtable.setroutingtable(mydevice)
 
     print "\nPrint Routing Table"
     myroutingtable.printtable()
 
-    print "\nWhat interface does {0} exit".format(DESTIP)
-    print myroutingtable.whatinterface(DESTIP)
+    print "\nWhat interface does {0} exit".format(TRACEDATA['destip'])
+    print myroutingtable.whatinterface(TRACEDATA['destip'])
 
     print "\nRunning Packet Trace"
-    _, results = runpackettracer(mydevice, 'outside', PROTOCOL, SOURCEIP, \
-    SOURCEPORT, DESTIP, DESTPORT)
+    _, results = runpackettracer(mydevice, TRACEDATA)
 
     pp(results)
 
