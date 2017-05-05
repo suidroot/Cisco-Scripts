@@ -41,12 +41,14 @@ class Device(object):
 
     def connect(self, devicedef):
         """ Setup connection to device """
+
         self.net_connect = ConnectHandler(**devicedef)
 
         return self.net_connect
 
     def runcommand(self, mycommand):
         """ Run arbitrary command on device and return text output """
+
         runnetconnect = self.net_connect
         output = runnetconnect.send_command(mycommand)
 
@@ -108,6 +110,7 @@ class ASARoutingTable(object):
 
     def whatinterface(self, ipaddr, nondefault=False):
         """ Determine what Interface a IP address exits """
+
         addr4 = ipaddress.ip_address(unicode(ipaddr))
         outboundinterface = ""
 
@@ -124,12 +127,27 @@ class ASARoutingTable(object):
 
         return outboundinterface
 
-    def whatnexthop(self):
-        pass
+    def whatnexthop(self, ipaddr, nondefault=False):
+        """ Gather the next hop IP address from the route """
+
+        addr4 = ipaddress.ip_address(unicode(ipaddr))
+        nexthopip = ""
+
+        for currententry in self.routingtable:
+            if currententry['default'] == 'yes':
+                defaultnexthop = currententry['nexthop']
+            else:
+                if addr4 in currententry['address_pair']:
+                    nexthopip = currententry['nexthop']
+
+            if not nondefault:
+                if nexthopip == "":
+                    nexthopip = defaultnexthop
+
+        return nexthopip
 
     def printtable(self):
         """ Print Routing Table """
-        # print self.routingtable
 
         for line in self.routingtable:
             print line
@@ -139,28 +157,27 @@ def runpackettracer(mydevice, tracedata):
     """ Run packet tracer command and return output in disctionary format """
     import xmltodict
 
+    phases = []
+
+    # Transfer the variables from the disctionary
     interface = tracedata['inputinterface']
     protocol = tracedata['protocol']
     srcip = tracedata['sourceip']
+    dstip = tracedata['destip']
+    dstport = tracedata['destport']
 
     if not tracedata.has_key('sourceport'):
         srcport = str(randint(1025, 65000))
     else:
         srcport = tracedata['sourceport']
 
-    dstip = tracedata['destip']
-    dstport = tracedata['destport']
-
-
-    phases = []
-
+    # Example command
     # ciscoasa# packet-tracer input outside tcp 1.1.1.1 2 2.2.2.2 443 xml
     mycommand = "packet-tracer input " + interface + " "  + protocol + " " + \
     srcip + " " + srcport + " " + dstip + " " + dstport + " xml"
-
     output = mydevice.runcommand(mycommand)
 
-    # this section is needed to work thorugh non standard XML output
+    # This section is needed to work thorugh non standard XML output
     output = output.split("</Phase>")
     for line in output:
         if "Phase" in line:
