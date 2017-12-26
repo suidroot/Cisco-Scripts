@@ -153,40 +153,78 @@ class ASARoutingTable(object):
             print line
             # pp(line)
 
-def runpackettracer(mydevice, tracedata):
-    """ Run packet tracer command and return output in disctionary format """
-    import xmltodict
 
-    phases = []
+class PacketTracer(object):
+    """ Collect and Parse ASA Packet Tracer information """
 
-    # Transfer the variables from the disctionary
-    interface = tracedata['inputinterface']
-    protocol = tracedata['protocol']
-    srcip = tracedata['sourceip']
-    dstip = tracedata['destip']
-    dstport = tracedata['destport']
+    def __init__(self):
+        self.phases = []
+        self.result = None
 
-    if not tracedata.has_key('sourceport'):
-        srcport = str(randint(1025, 65000))
-    else:
-        srcport = tracedata['sourceport']
+    def processtracer(self, output):
+        """ Process Packet tracer XML and return output in disctionary format """
+        import xmltodict
 
-    # Example command
-    # ciscoasa# packet-tracer input outside tcp 1.1.1.1 2 2.2.2.2 443 xml
-    mycommand = "packet-tracer input " + interface + " "  + protocol + " " + \
-    srcip + " " + srcport + " " + dstip + " " + dstport + " xml"
-    output = mydevice.runcommand(mycommand)
+        # This section is needed to work thorugh non standard XML output
+        output = output.split("</Phase>")
+        for line in output:
+            if "Phase" in line:
+                currentphase = xmltodict.parse(line + "</Phase>")['Phase']
+                self.phases.insert(int(currentphase['id']), currentphase)
+            else:
+                self.result = xmltodict.parse(line)
 
-    # This section is needed to work thorugh non standard XML output
-    output = output.split("</Phase>")
-    for line in output:
-        if "Phase" in line:
-            currentphase = xmltodict.parse(line + "</Phase>")['Phase']
-            phases.insert(int(currentphase['id']), currentphase)
+        return self.phases, self.result
+
+    def runpackettracer(self, mydevice, tracedata):
+        """ Run packet tracer command and collect XML data """
+
+        # Transfer the variables from the disctionary
+        interface = tracedata['inputinterface']
+        protocol = tracedata['protocol']
+        srcip = tracedata['sourceip']
+        dstip = tracedata['destip']
+        dstport = tracedata['destport']
+
+        if not tracedata.has_key('sourceport'):
+            srcport = str(randint(1025, 65000))
         else:
-            result = xmltodict.parse(line)
+            srcport = tracedata['sourceport']
 
-    return phases, result
+        # Example command
+        # ciscoasa# packet-tracer input outside tcp 1.1.1.1 2 2.2.2.2 443 xml
+        mycommand = "packet-tracer input " + interface + " "  + protocol + " " + \
+        srcip + " " + srcport + " " + dstip + " " + dstport + " xml"
+
+        output = mydevice.runcommand(mycommand)
+
+        return output
+
+class AccessList(object):
+
+    def __init__(self):
+        pass 
+    
+    def CollectConfiguration(self):
+        # show run access-list
+        # show access-list
+        # show run access-group
+        # object groups
+        pass
+
+    def ParseConfiguration(self):
+
+        # line
+        # protocol
+        # src ip
+        # src port
+        # dst ip
+        # dst port
+        pass
+
+    def AddAccessList(self, ruleinfo, beforedeny=True):
+        pass
+
 
 def addtoconfig(thebuffer, totallist):
 
@@ -298,10 +336,14 @@ def main():
     print "\nWhat interface does {0} exit".format(TRACEDATA['destip'])
     print myroutingtable.whatinterface(TRACEDATA['destip'])
 
+    mypackettracer = PacketTracer()
+
+
     print "\nRunning Packet Trace"
-    _, results = runpackettracer(mydevice, TRACEDATA)
+    output = mypackettracer.runpackettracer(mydevice, TRACEDATA)
+    _, results = mypackettracer.processtracer(output)
 
     pp(results)
 
-
-main()
+if __name__ == "__main__":
+    main()
